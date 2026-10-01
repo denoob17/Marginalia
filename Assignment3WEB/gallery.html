@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gallery — Marginalia</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <a class="visually-hidden-focusable p-2" href="#main">Skip to main content</a>
+
+  <header class="sticky-top">
+    <nav class="navbar navbar-expand-lg bg-dark border-bottom border-primary" data-bs-theme="dark" aria-label="Main navigation">
+      <div class="container">
+        <a class="navbar-brand fw-bold text-primary fs-4" href="index.html">Marginalia</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false"
+                aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="mainNav">
+          <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link text-uppercase small fw-semibold px-lg-3" href="index.html">Home</a></li>
+          <li class="nav-item"><a class="nav-link text-uppercase small fw-semibold px-lg-3" href="about.html">About Us</a></li>
+          <li class="nav-item"><a class="nav-link text-uppercase small fw-semibold px-lg-3" href="excerpts.html">Excerpts</a></li>
+          <li class="nav-item"><a class="nav-link text-uppercase small fw-semibold px-lg-3 active" aria-current="page" href="gallery.html">Gallery</a></li>
+          <li class="nav-item"><a class="nav-link text-uppercase small fw-semibold px-lg-3" href="contact.html">Contact</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main id="main" class="container py-4 px-sm-2">
+    <h1 class="mb-3">Literary Collection</h1>
+    <p class="mb-4">Explore our collection of favorite books, from classic literature to mystery and psychological fiction.</p>
+
+    <div class="row justify-content-center mb-5">
+      <div class="col-12 col-lg-8">
+        <div id="galleryCarousel" class="carousel slide" aria-label="Books and authors carousel">
+          <div class="carousel-indicators">
+          <button type="button" data-bs-target="#galleryCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1: Anna Karenina"></button>
+          <button type="button" data-bs-target="#galleryCarousel" data-bs-slide-to="1" aria-label="Slide 2: Murder on the Orient Express"></button>
+          <button type="button" data-bs-target="#galleryCarousel" data-bs-slide-to="2" aria-label="Slide 3: The Outsider"></button>
+          <button type="button" data-bs-target="#galleryCarousel" data-bs-slide-to="3" aria-label="Slide 4: First Principle"></button>
+          <button type="button" data-bs-target="#galleryCarousel" data-bs-slide-to="4" aria-label="Slide 5: The Human Chair"></button>
+          <button type="button" data-bs-target="#galleryCarousel" data-bs-slide-to="5" aria-label="Slide 6: No Longer Human"></button>
+          <button type="button" data-bs-target="#galleryCarousel" data-bs-slide-to="6" aria-label="Slide 7: Leo Tolstoy"></button>
+          <button type="button" data-bs-target="#galleryCarousel" data-bs-slide-to="7" aria-label="Slide 8: Fyodor Dostoevsky"></button>
+          <button type="button" data-bs-target="#galleryCarousel" data-bs-slide-to="8" aria-label="Slide 9: Oscar Wilde"></button>
+          </div>
+          <div class="carousel-inner rounded">
+          <div class="carousel-item active">
+            <img src="images/anna-karenina.jpg" class="d-block w-100 carousel-img" alt="Book cover of Anna Karenina">
+            <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-75 rounded py-2">
+              <h3 class="h5 mb-0">Anna Karenina</h3>
+            </div>
+          </div>
+          <div class="carousel-item">
+            <img src="images/murder-on-the-orient-express.jpg" class="d-block w-100 carousel-img" alt="Book cover of Murder on the Orient Express">
+            <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-75 rounded py-2">
+              <h3 class="h5 mb-0">Murder on the Orient Express</h3>
+            </div>
+          </div>
+          <div class="carousel-item">
+            <img src="images/the-outsider.jpg" class="d-block w-100 carousel-img" alt="Book cover of The Outsider">
+            <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-75 rounded py-2">
+              <h3 class="h5 mb-0">The Outsider</h3>
+            </div>
+          </div>
+          <div class="carousel-item">
+            <img src="images/first-principle.jpg" class="d-block w-100 carousel-img" alt="Book cover of First Principle">
+            <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-75 rounded py-2">
+              <h3 class="h5 mb-0">First Principle</h3>
+            </div>
+          </div>
+          <div class="carousel-item">
+            <img src="images/the-human-chair.jpg" class="d-block w-100 carousel-img" alt="Book cover of The Human Chair">
+            <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-75 rounded py-2">
+              <h3 class="h5 mb-0">The Human Chair</h3>
+            </div>
+          </div>
+          <div class="carousel-item">
+            <img src="images/no-longer-human.jpg" class="d-block w-100 carousel-img" alt="Book cover of No Longer Human">
+            <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-75 rounded py-2">
+              <h3 class="h5 mb-0">No Longer Human</h3>
+            </div>
+          </div>
+          <div class="carousel-item">
+            <img src="images/leo-tolstoy.jpg" class="d-block w-100 carousel-img" alt="Portrait of Leo Tolstoy">
+            <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-75 rounded py-2">
+              <h3 class="h5 mb-0">Leo Tolstoy</h3>
+            </div>
+          </div>
+          <div class="carousel-item">
+            <img src="images/fyodor-dostoevsky.jpg" class="d-block w-100 carousel-img" alt="Portrait of Fyodor Dostoevsky">
+            <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-75 rounded py-2">
+              <h3 class="h5 mb-0">Fyodor Dostoevsky</h3>
+            </div>
+          </div>
+          <div class="carousel-item">
+            <img src="images/oscar-wilde.jpg" class="d-block w-100 carousel-img" alt="Portrait of Oscar Wilde">
+            <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-75 rounded py-2">
+              <h3 class="h5 mb-0">Oscar Wilde</h3>
+            </div>
+          </div>
+          </div>
+          <button class="carousel-control-prev" type="button" data-bs-target="#galleryCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+          </button>
+          <button class="carousel-control-next" type="button" data-bs-target="#galleryCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <h2 class="mb-4">Our Books</h2>
+    <div class="row g-4">
+        <div class="col-12 col-sm-6 col-lg-4">
+          <article class="card h-100">
+            <img src="images/murder-on-the-orient-express.jpg" alt="Book cover of Murder on the Orient Express" class="card-img-top gallery-img">
+            <div class="card-body">
+              <h3 class="card-title h5">Murder on the Orient Express</h3>
+              <p class="card-subtitle fst-italic text-body-secondary mb-2">Agatha Christie</p>
+              <p class="card-text">A classic mystery about a murder aboard the famous Orient Express, investigated by Hercule Poirot.</p>
+            </div>
+          </article>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-4">
+          <article class="card h-100">
+            <img src="images/anna-karenina.jpg" alt="Book cover of Anna Karenina" class="card-img-top gallery-img">
+            <div class="card-body">
+              <h3 class="card-title h5">Anna Karenina</h3>
+              <p class="card-subtitle fst-italic text-body-secondary mb-2">Leo Tolstoy</p>
+              <p class="card-text">A classic novel about love, family, society, and the consequences of difficult personal choices.</p>
+            </div>
+          </article>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-4">
+          <article class="card h-100">
+            <img src="images/the-outsider.jpg" alt="Book cover of The Outsider" class="card-img-top gallery-img">
+            <div class="card-body">
+              <h3 class="card-title h5">The Outsider</h3>
+              <p class="card-subtitle fst-italic text-body-secondary mb-2">Albert Camus</p>
+              <p class="card-text">A philosophical novel exploring alienation, morality, and the absurd through the life of Meursault.</p>
+            </div>
+          </article>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-4">
+          <article class="card h-100">
+            <img src="images/first-principle.jpg" alt="Book cover of First Principle" class="card-img-top gallery-img">
+            <div class="card-body">
+              <h3 class="card-title h5">First Principle</h3>
+              <p class="card-subtitle fst-italic text-body-secondary mb-2">Thomas E. Ricks</p>
+              <p class="card-text">A nonfiction work exploring leadership, military history, and the principles behind successful strategy.</p>
+            </div>
+          </article>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-4">
+          <article class="card h-100">
+            <img src="images/the-human-chair.jpg" alt="Book cover of The Human Chair" class="card-img-top gallery-img">
+            <div class="card-body">
+              <h3 class="card-title h5">The Human Chair</h3>
+              <p class="card-subtitle fst-italic text-body-secondary mb-2">Edogawa Ranpo</p>
+              <p class="card-text">A mysterious and unsettling story about obsession, identity, and a disturbing secret hidden inside a chair.</p>
+            </div>
+          </article>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-4">
+          <article class="card h-100">
+            <img src="images/no-longer-human.jpg" alt="Book cover of No Longer Human" class="card-img-top gallery-img">
+            <div class="card-body">
+              <h3 class="card-title h5">No Longer Human</h3>
+              <p class="card-subtitle fst-italic text-body-secondary mb-2">Osamu Dazai</p>
+              <p class="card-text">A dark psychological novel about loneliness, alienation, and a man's struggle to connect with society.</p>
+            </div>
+          </article>
+        </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 mt-5">
+      <a href="contact.html" class="btn btn-primary btn-lg">Suggest a book</a>
+      <a href="excerpts.html" class="btn btn-outline-secondary btn-lg">Read our excerpts</a>
+    </div>
+  </main>
+
+  <footer class="bg-dark border-top text-center text-body-secondary small py-4 px-3 px-sm-2 mt-5">
+    <p class="mb-1">Marginalia — Assignment #3 Project | Group 2503</p>
+    <p class="mb-0">Team Members: Akerke Ramazan &amp; Gabidin Kaldybek</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

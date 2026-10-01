@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About Us — Marginalia</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <a class="visually-hidden-focusable p-2" href="#main">Skip to main content</a>
+
+  <header class="sticky-top">
+    <nav class="navbar navbar-expand-lg bg-dark border-bottom border-primary" data-bs-theme="dark" aria-label="Main navigation">
+      <div class="container">
+        <a class="navbar-brand fw-bold text-primary fs-4" href="index.html">Marginalia</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false"
+                aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="mainNav">
+          <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link text-uppercase small fw-semibold px-lg-3" href="index.html">Home</a></li>
+          <li class="nav-item"><a class="nav-link text-uppercase small fw-semibold px-lg-3 active" aria-current="page" href="about.html">About Us</a></li>
+          <li class="nav-item"><a class="nav-link text-uppercase small fw-semibold px-lg-3" href="excerpts.html">Excerpts</a></li>
+          <li class="nav-item"><a class="nav-link text-uppercase small fw-semibold px-lg-3" href="gallery.html">Gallery</a></li>
+          <li class="nav-item"><a class="nav-link text-uppercase small fw-semibold px-lg-3" href="contact.html">Contact</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <div class="container py-4 px-sm-2">
+    <div class="row g-4">
+
+      <main id="main" class="col-12 col-lg-9 order-lg-2">
+        <h1 class="mb-3">About the Team</h1>
+        <p class="mb-4">Marginalia is a two-person project. Below is a short biography for each of us — who we are, what we're studying, and what kind of books tend to end up on our nightstands.</p>
+
+        <div class="row g-4">
+        <div class="col-12 col-md-6">
+          <article class="card h-100 text-center">
+            <div class="card-body p-4">
+              <img src="images/avatar-akerke.svg" alt="Circular monogram portrait for Akerke Ramazan" width="140" height="140"
+                   class="rounded-circle border border-primary border-3 d-block mx-auto mb-3">
+              <h3 class="card-title h5">Akerke Ramazan</h3>
+              <p class="mb-2"><span class="fw-bold text-primary">Pages built:</span> Home, About Us</p>
+              <p class="card-text">Second-year student, Group 2503. Built the site's structure and homepage, and put together this bio section. Favourite genre: gothic fiction and anything with a library in the first chapter.</p>
+            </div>
+          </article>
+        </div>
+        <div class="col-12 col-md-6">
+          <article class="card h-100 text-center">
+            <div class="card-body p-4">
+              <img src="images/avatar-teammate.svg" alt="Circular monogram portrait for Gabidin Kaldybek" width="140" height="140"
+                   class="rounded-circle border border-primary border-3 d-block mx-auto mb-3">
+              <h3 class="card-title h5">Gabidin Kaldybek</h3>
+              <p class="mb-2"><span class="fw-bold text-primary">Pages built:</span> Excerpts, Contact</p>
+              <p class="card-text">Second-year student, Group 2503. Built the excerpts archive and the contact form, and keeps our reading log honest. Read the short bio on the <a href="contact.html">Contact page</a> for more.</p>
+            </div>
+          </article>
+        </div>
+        </div>
+
+        <hr class="my-5 mx-auto w-50">
+
+        <div class="row g-4">
+          <section class="col-12 col-lg-6">
+            <h2 class="mb-3">A Few Things We Both Like</h2>
+            <ul>
+              <li>Reading with tea instead of coffee, always</li>
+              <li>Annotating books in pencil, never pen</li>
+              <li>Dim lighting and a genuinely quiet room</li>
+              <li>Old libraries more than new bookstores</li>
+            </ul>
+          </section>
+          <section class="col-12 col-lg-6">
+            <h2 class="mb-3">How This Project Came Together</h2>
+            <ol>
+              <li>We agreed on a theme — a shared "book excerpt" journal — before writing any code.</li>
+              <li>We built one shared stylesheet so every page would feel consistent.</li>
+              <li>We tested every link and image path before calling a page finished.</li>
+              <li>In Assignment #3 we made the site responsive with media queries and Bootstrap.</li>
+            </ol>
+          </section>
+        </div>
+        <div class="d-flex flex-wrap gap-2 mt-5">
+          <a href="contact.html" class="btn btn-primary">Send us an excerpt</a>
+          <a href="excerpts.html" class="btn btn-outline-secondary">See our excerpts</a>
+        </div>
+      </main>
+
+      <aside class="col-12 col-lg-3 order-lg-1" aria-labelledby="facts-title">
+        <div class="card">
+          <div class="card-body">
+            <p class="small text-body-secondary text-uppercase mb-1">Marginalia</p>
+            <h2 id="facts-title" class="h3 mb-3">Fun Facts</h2>
+          </div>
+          <ul class="list-group list-group-flush">
+          <li class="list-group-item bg-transparent d-flex gap-3">
+            <span class="badge text-bg-primary align-self-start">01</span>
+            <span>We both prefer tea over coffee while reading.</span>
+          </li>
+          <li class="list-group-item bg-transparent d-flex gap-3">
+            <span class="badge text-bg-primary align-self-start">02</span>
+            <span>We always annotate our books with pencil.</span>
+          </li>
+          <li class="list-group-item bg-transparent d-flex gap-3">
+            <span class="badge text-bg-primary align-self-start">03</span>
+            <span>We prefer old libraries to modern bookstores.</span>
+          </li>
+          <li class="list-group-item bg-transparent d-flex gap-3">
+            <span class="badge text-bg-primary align-self-start">04</span>
+            <span>Quiet rooms and dim lighting make the perfect reading mood.</span>
+          </li>
+          <li class="list-group-item bg-transparent d-flex gap-3">
+            <span class="badge text-bg-primary align-self-start">05</span>
+            <span>A good book can easily turn a five-minute break into an hour.</span>
+          </li>
+          </ul>
+          <div class="card-body small text-uppercase text-body-secondary">
+            Read more.<br>Write more.<br>Get lost in books.
+          </div>
+        </div>
+      </aside>
+
+    </div>
+  </div>
+
+  <footer class="bg-dark border-top text-center text-body-secondary small py-4 px-3 px-sm-2 mt-5">
+    <p class="mb-1">Marginalia — Assignment #3 Project | Group 2503</p>
+    <p class="mb-0">Team Members: Akerke Ramazan &amp; Gabidin Kaldybek</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

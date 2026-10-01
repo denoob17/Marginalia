@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Excerpts — Marginalia</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <a class="visually-hidden-focusable p-2" href="#main">Skip to main content</a>
+
+  <header class="sticky-top">
+    <nav class="navbar navbar-expand-lg bg-dark border-bottom border-primary" data-bs-theme="dark" aria-label="Main navigation">
+      <div class="container">
+        <a class="navbar-brand fw-bold text-primary fs-4" href="index.html">Marginalia</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false"
+                aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="mainNav">
+          <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link text-uppercase small fw-semibold px-lg-3" href="index.html">Home</a></li>
+          <li class="nav-item"><a class="nav-link text-uppercase small fw-semibold px-lg-3" href="about.html">About Us</a></li>
+          <li class="nav-item"><a class="nav-link text-uppercase small fw-semibold px-lg-3 active" aria-current="page" href="excerpts.html">Excerpts</a></li>
+          <li class="nav-item"><a class="nav-link text-uppercase small fw-semibold px-lg-3" href="gallery.html">Gallery</a></li>
+          <li class="nav-item"><a class="nav-link text-uppercase small fw-semibold px-lg-3" href="contact.html">Contact</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main id="main" class="container py-4 px-sm-2">
+    <img src="images/open-book.svg" alt="Illustration of an open book with lines of text on each page"
+         width="120" height="120" class="d-block mx-auto mb-3">
+    <h1 class="text-center mb-3">The Excerpt Collection</h1>
+    <p class="text-center mb-5">Every entry below follows the same shape: a short line from something we've read, where it came from, and a few honest sentences about why it stuck with us.</p>
+
+    <div class="row g-4">
+      <section class="col-12 col-lg-6">
+        <h2 class="mb-3">Themes We Keep Coming Back To</h2>
+        <ul class="list-inline">
+            <li class="list-inline-item mb-2"><span class="badge rounded-pill text-bg-secondary fs-6 fw-normal">Solitude</span></li>
+            <li class="list-inline-item mb-2"><span class="badge rounded-pill text-bg-secondary fs-6 fw-normal">Memory</span></li>
+            <li class="list-inline-item mb-2"><span class="badge rounded-pill text-bg-secondary fs-6 fw-normal">Obsession</span></li>
+            <li class="list-inline-item mb-2"><span class="badge rounded-pill text-bg-secondary fs-6 fw-normal">Old libraries</span></li>
+            <li class="list-inline-item mb-2"><span class="badge rounded-pill text-bg-secondary fs-6 fw-normal">Letters &amp; diaries</span></li>
+            <li class="list-inline-item mb-2"><span class="badge rounded-pill text-bg-secondary fs-6 fw-normal">Quiet grief</span></li>
+        </ul>
+      </section>
+      <section class="col-12 col-lg-6">
+        <h2 class="mb-3">How We Choose an Excerpt</h2>
+        <ol>
+          <li>One of us underlines a line while reading — on paper, not a highlighter app.</li>
+          <li>We read it out loud to each other before deciding it's worth keeping.</li>
+          <li>We each write a short, separate reflection without reading the other's first.</li>
+          <li>We compare notes and publish both reactions side by side.</li>
+        </ol>
+      </section>
+    </div>
+
+    <hr class="my-5 mx-auto w-50">
+
+    <h2 class="mb-4">Recent Entries</h2>
+    <div class="row g-4">
+      <div class="col-12 col-lg-6">
+        <article class="card h-100">
+          <div class="card-body">
+            <blockquote class="border-start border-3 border-primary ps-3 mb-2 fst-italic">&ldquo;All happy families are alike.&rdquo;</blockquote>
+            <p class="small text-body-secondary">— Leo Tolstoy, <em>Anna Karenina</em></p>
+            <p class="card-text border-top pt-3">The most quoted opening line on this entire list, and we still think it's underrated. One sentence and you already know the whole book will argue with itself.</p>
+          </div>
+        </article>
+      </div>
+      <div class="col-12 col-lg-6">
+        <article class="card h-100">
+          <div class="card-body">
+            <blockquote class="border-start border-3 border-primary ps-3 mb-2 fst-italic">&ldquo;It was the best of times, it was the worst of times.&rdquo;</blockquote>
+            <p class="small text-body-secondary">— Charles Dickens, <em>A Tale of Two Cities</em></p>
+            <p class="card-text border-top pt-3">We almost left this one out for being too obvious, then re-read the next few pages and understood why it's still taught.</p>
+          </div>
+        </article>
+      </div>
+    </div>
+
+    <h2 class="mt-5 mb-3">Our Reading Log</h2>
+    <p>A running record of what we're currently working through, kept honest on purpose.</p>
+    <div class="table-responsive">
+      <table class="table table-striped table-hover align-middle">
+        <caption class="visually-hidden">Books we have finished, are reading, or plan to read</caption>
+        <thead>
+          <tr>
+            <th scope="col">Title</th>
+            <th scope="col">Author</th>
+            <th scope="col">Genre</th>
+            <th scope="col">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Murder on the Orient Express</td><td>Agatha Christie</td><td>Mystery Novel</td>
+            <td><span class="badge text-bg-success">Finished</span></td>
+          </tr>
+          <tr>
+            <td>Anna Karenina</td><td>Leo Tolstoy</td><td>Classic Fiction</td>
+            <td><span class="badge text-bg-primary">Reading</span></td>
+          </tr>
+          <tr>
+            <td>Outsider</td><td>Albert Camus</td><td>Philosophy</td>
+            <td><span class="badge text-bg-success">Finished</span></td>
+          </tr>
+          <tr>
+            <td>First principle</td><td>Thomas E. Ricks</td><td>Nonfiction</td>
+            <td><span class="badge text-bg-secondary">To-Read</span></td>
+          </tr>
+          <tr>
+            <td>The Human Chair</td><td>Edogawa Ranpo</td><td>Mystery / Horror</td>
+            <td><span class="badge text-bg-success">Finished</span></td>
+          </tr>
+          <tr>
+            <td>No Longer Human</td><td>Osamu Dazai</td><td>Classic Fiction</td>
+            <td><span class="badge text-bg-primary">Reading</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 mt-4">
+      <a href="contact.html" class="btn btn-primary btn-lg">Send us an excerpt</a>
+      <a href="gallery.html" class="btn btn-outline-secondary btn-lg">Browse the gallery</a>
+    </div>
+  </main>
+
+  <footer class="bg-dark border-top text-center text-body-secondary small py-4 px-3 px-sm-2 mt-5">
+    <p class="mb-1">Marginalia — Assignment #3 Project | Group 2503</p>
+    <p class="mb-0">Team Members: Akerke Ramazan &amp; Gabidin Kaldybek</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
