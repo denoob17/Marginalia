@@ -23,6 +23,7 @@ The idea is inspired by the notes and thoughts people write in the margins of bo
 ### 🌐 Live Website
 
 [Visit Marginalia](https://denoob17.github.io/Marginalia/)
+
 [Visit Marginalia](https://marginalia-brown.vercel.app/)
 
 ### 👥 Team
