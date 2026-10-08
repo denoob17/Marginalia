@@ -16,7 +16,6 @@ The idea is inspired by the notes and thoughts people write in the margins of bo
 
 * HTML
 * CSS
-* JavaScript
 
 No frameworks or libraries were used. Everything was built from scratch.
 
@@ -27,3 +26,4 @@ No frameworks or libraries were used. Everything was built from scratch.
 ### 👥 Team
 
 Created as a university web development project.
+SE-2503 Akerke Ramazan & Gabidin Kaldybek
