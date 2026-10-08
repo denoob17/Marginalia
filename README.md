@@ -17,7 +17,8 @@ The idea is inspired by the notes and thoughts people write in the margins of bo
 * HTML
 * CSS
 
-No frameworks or libraries were used. Everything was built from scratch.
+### USED frameworks or libraries
+*Bootstrap
 
 ### 🌐 Live Website
 
