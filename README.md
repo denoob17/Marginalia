@@ -18,7 +18,7 @@ The idea is inspired by the notes and thoughts people write in the margins of bo
 * CSS
 
 ### USED frameworks or libraries
-*Bootstrap
+* Bootstrap
 
 ### 🌐 Live Website
 
