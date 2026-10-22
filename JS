@@ -1,0 +1,121 @@
+document.addEventListener('DOMContentLoaded', () => {
+
+  const contactForm = document.getElementById('contactForm');
+  if (contactForm) {
+    contactForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      let isValid = true;
+
+      document.querySelectorAll('.error-msg').forEach(el => el.textContent = '');
+
+      const email = document.getElementById('email')?.value.trim();
+      const password = document.getElementById('password')?.value;
+      const confirmPassword = document.getElementById('confirmPassword')?.value;
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!email) {
+        showError('emailError', 'Email is required.');
+        isValid = false;
+      } else if (!emailRegex.test(email)) {
+        showError('emailError', 'Invalid email format.');
+        isValid = false;
+      }
+
+      if (password !== undefined) {
+        if (!password) {
+          showError('passwordError', 'Password is required.');
+          isValid = false;
+        } else if (password.length < 8) {
+          showError('passwordError', 'Password must be at least 8 characters.');
+          isValid = false;
+        }
+      }
+
+      if (confirmPassword !== undefined && confirmPassword !== password) {
+        showError('confirmPasswordError', 'Passwords do not match.');
+        isValid = false;
+      }
+
+      if (isValid) {
+        alert('Form submitted successfully!');
+        contactForm.reset();
+      }
+    });
+  }
+
+  function showError(elementId, message) {
+    const errorElement = document.getElementById(elementId);
+    if (errorElement) errorElement.textContent = message;
+  }
+
+
+  const accordionHeaders = document.querySelectorAll('.accordion-header');
+  accordionHeaders.forEach(header => {
+    header.addEventListener('click', () => {
+      header.classList.toggle('active');
+      const content = header.nextElementSibling;
+      if (content) {
+        content.classList.toggle('show');
+      }
+    });
+  });
+
+
+  const modal = document.getElementById('popupModal');
+  const openBtn = document.getElementById('openPopupBtn');
+  const closeBtn = document.getElementById('closePopupBtn');
+
+  if (openBtn && modal) {
+    openBtn.addEventListener('click', () => {
+      modal.style.display = 'block';
+    });
+  }
+
+  if (closeBtn && modal) {
+    closeBtn.addEventListener('click', () => {
+      modal.style.display = 'none';
+    });
+  }
+
+  window.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.style.display = 'none';
+    }
+  });
+
+
+  
+  const bgBtn = document.getElementById('changeBgBtn');
+  const themes = ['#f4f1ea', '#e8e4dc', '#d8d0c5', '#fcfbfa']; // 匹配你们网站的复古文学色调
+  let colorIndex = 0;
+
+  if (bgBtn) {
+    bgBtn.addEventListener('click', () => {
+      colorIndex = (colorIndex + 1) % themes.length;
+      document.body.style.backgroundColor = themes[colorIndex];
+    });
+  }
+
+
+  
+  function updateDateTime() {
+    const timeDisplay = document.getElementById('dateTimeDisplay');
+    if (timeDisplay) {
+      const now = new Date();
+      const options = { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric', 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit',
+        hour12: true 
+      };
+      timeDisplay.textContent = now.toLocaleString('en-US', options);
+    }
+  }
+
+  updateDateTime();
+  setInterval(updateDateTime, 1000);
+
+});
