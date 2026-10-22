@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-labelledby="envTitle">
+  <title id="envTitle">A closed envelope sealed with a wax stamp</title>
+  <circle cx="100" cy="100" r="92" fill="#2a2723" stroke="#4a443c" stroke-width="2"/>
+  <rect x="45" y="70" width="110" height="72" rx="4" fill="#34302a" stroke="#b5915b" stroke-width="2.5"/>
+  <path d="M45 74 L100 118 L155 74" fill="none" stroke="#b5915b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="100" cy="106" r="11" fill="#a97c74"/>
+  <path d="M95 106 a5 5 0 1 1 10 0 a5 5 0 1 1 -10 0" fill="#7c8a72"/>
+</svg>
