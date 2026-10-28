@@ -10,7 +10,7 @@
   <script src="js/script.js" defer></script>
 </head>
 <body>
-  <a class="visually-hidden-focusable p-2" href="#main">Skip to main content</a>
+  
 
   <header class="sticky-top">
     <nav class="navbar navbar-expand-lg bg-dark border-bottom border-primary" data-bs-theme="dark" aria-label="Main navigation">
@@ -23,6 +23,7 @@
         </button>
         <div class="collapse navbar-collapse" id="mainNav">
           <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+            
             <li class="nav-item"><a class="nav-link text-uppercase small fw-semibold px-lg-3" href="index.html">Home</a></li>
             <li class="nav-item"><a class="nav-link text-uppercase small fw-semibold px-lg-3" href="about.html">About Us</a></li>
             <li class="nav-item"><a class="nav-link text-uppercase small fw-semibold px-lg-3 active" aria-current="page" href="excerpts.html">Excerpts</a></li>
@@ -69,82 +70,25 @@
 
     <h2 class="mb-4">Recent Entries</h2>
 
-    <div class="row g-4">
-      <div class="col-12 col-lg-6">
-        <article class="card h-100">
-          <div class="card-body">
-            <blockquote class="border-start border-3 border-primary ps-3 mb-2 fst-italic">&ldquo;All happy families are alike.&rdquo;</blockquote>
-            <p class="small text-body-secondary">— Leo Tolstoy, <em>Anna Karenina</em></p>
-            <p class="card-text border-top pt-3">The most quoted opening line on this entire list, and we still think it's underrated. One sentence and you already know the whole book will argue with itself.</p>
-          </div>
-        </article>
-      </div>
-
-      <div class="col-12 col-lg-6">
-        <article class="card h-100">
-          <div class="card-body">
-            <blockquote class="border-start border-3 border-primary ps-3 mb-2 fst-italic">&ldquo;It was the best of times, it was the worst of times.&rdquo;</blockquote>
-            <p class="small text-body-secondary">— Charles Dickens, <em>A Tale of Two Cities</em></p>
-            <p class="card-text border-top pt-3">We almost left this one out for being too obvious, then re-read the next few pages and understood why it's still taught.</p>
-          </div>
-        </article>
-      </div>
-    </div>
+    <div class="mq-card-group" id="excerptsContainer"></div>
 
     <h2 class="mt-5 mb-3">Our Reading Log</h2>
     <p>A running record of what we're currently working through, kept honest on purpose.</p>
 
     <div class="table-responsive">
-      <table class="table table-striped table-hover align-middle">
-        <caption class="visually-hidden">Books we have finished, are reading, or plan to read</caption>
-        <thead>
-          <tr>
-            <th scope="col">Title</th>
-            <th scope="col">Author</th>
-            <th scope="col">Genre</th>
-            <th scope="col">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Murder on the Orient Express</td>
-            <td>Agatha Christie</td>
-            <td>Mystery Novel</td>
-            <td><span class="badge text-bg-success">Finished</span></td>
-          </tr>
-          <tr>
-            <td>Anna Karenina</td>
-            <td>Leo Tolstoy</td>
-            <td>Classic Fiction</td>
-            <td><span class="badge text-bg-primary">Reading</span></td>
-          </tr>
-          <tr>
-            <td>Outsider</td>
-            <td>Albert Camus</td>
-            <td>Philosophy</td>
-            <td><span class="badge text-bg-success">Finished</span></td>
-          </tr>
-          <tr>
-            <td>First principle</td>
-            <td>Thomas E. Ricks</td>
-            <td>Nonfiction</td>
-            <td><span class="badge text-bg-secondary">To-Read</span></td>
-          </tr>
-          <tr>
-            <td>The Human Chair</td>
-            <td>Edogawa Ranpo</td>
-            <td>Mystery / Horror</td>
-            <td><span class="badge text-bg-success">Finished</span></td>
-          </tr>
-          <tr>
-            <td>No Longer Human</td>
-            <td>Osamu Dazai</td>
-            <td>Classic Fiction</td>
-            <td><span class="badge text-bg-primary">Reading</span></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+  <table class="table table-striped table-hover align-middle">
+      <caption class="visually-hidden">Books we have finished, are reading, or plan to read</caption>
+      <thead>
+       <tr>
+          <th scope="col">Title</th>
+          <th scope="col">Author</th>
+          <th scope="col">Genre</th>
+          <th scope="col">Status</th>
+      </tr>
+    </thead>
+    <tbody id="readingLogBody"></tbody>
+  </table>
+  </div>
 
     <div class="d-flex flex-wrap gap-2 mt-4">
       <a href="contact.html" class="btn btn-primary btn-lg">Send us an excerpt</a>
