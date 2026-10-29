@@ -1,19 +1,18 @@
-
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Contact — Marginalia</title>
-
+ 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <script src="js/script.js" defer></script>
 </head>
-
+ 
 <body>
   
-
+ 
   <header class="sticky-top">
     <nav class="navbar navbar-expand-lg bg-dark border-bottom border-primary"
          data-bs-theme="dark" aria-label="Main navigation">
@@ -21,14 +20,14 @@
         <a class="navbar-brand fw-bold text-primary fs-4" href="index.html">
           Marginalia
         </a>
-
+ 
         <button class="navbar-toggler" type="button"
                 data-bs-toggle="collapse" data-bs-target="#mainNav"
                 aria-controls="mainNav" aria-expanded="false"
                 aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
-
+ 
         <div class="collapse navbar-collapse" id="mainNav">
           <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
             <li class="nav-item">
@@ -56,24 +55,24 @@
       </div>
     </nav>
   </header>
-
+ 
   <main id="main" class="container py-4 px-sm-2">
-
+ 
     <img src="images/envelope.svg"
          alt="Illustration of a sealed envelope with a wax stamp"
          width="110" height="110"
          class="d-block mx-auto mb-3">
-
+ 
     <h1 class="text-center mb-3">Send Us a Line</h1>
-
+ 
     <p class="text-center mb-5">
       Found a sentence you can't stop thinking about?
       Send it our way and, if it fits the collection, it might show up
       on the <a href="excerpts.html">Excerpts page</a> with proper credit.
     </p>
-
+ 
     <div class="row g-4">
-
+ 
       <div class="col-12 col-lg-4">
         <div class="card">
           <div class="card-body">
@@ -87,32 +86,33 @@
           </div>
         </div>
       </div>
-
+ 
       <div class="col-12 col-lg-8">
-
+ 
         
         <form id="contactForm" class="card card-body p-3 p-md-4"
               action="#" method="post" novalidate>
-
+ 
           <h2 class="h3 mb-3">Submission Form</h2>
-
+ 
           <div id="formSuccess" class="alert alert-success mt-3" role="alert" aria-live="polite" hidden>
   <h3 class="h5 alert-heading">Submission Successful!</h3>
   <p class="mb-0">Thank you for sharing your excerpt with us. Your submission has been received successfully!</p>
 </div>
-
+ 
           <div class="row g-3">
-
+ 
             <div class="col-12 col-md-6">
               <label for="name" class="form-label">Your Name</label>
               <input type="text" class="form-control"
                      id="name" name="name"
                      placeholder="e.g. Aigerim Bekova"
+                     maxlength="50"
                      autocomplete="name" required>
               <span class="error-msg text-danger small"
                     id="nameError" role="alert"></span>
             </div>
-
+ 
             <div class="col-12 col-md-6">
               <label for="email" class="form-label">Your Email</label>
               <div class="input-group">
@@ -120,12 +120,13 @@
                 <input type="email" class="form-control"
                        id="email" name="email"
                        placeholder="you@example.com"
+                       maxlength="254" data-no-spaces
                        autocomplete="email" required>
               </div>
               <span class="error-msg text-danger small"
                     id="emailError" role="alert"></span>
             </div>
-
+ 
             <div class="col-12 col-md-6">
               <label for="category" class="form-label">Submission Type</label>
               <select class="form-select" id="category" name="category">
@@ -135,13 +136,13 @@
                 <option value="other">Something Else</option>
               </select>
             </div>
-
+ 
             <div class="col-12 col-md-6">
               <fieldset>
                 <legend class="form-label fs-6">
                   How did you find this site?
                 </legend>
-
+ 
                 <div class="form-check">
                   <input class="form-check-input" type="radio"
                          name="source" id="source-friend"
@@ -150,7 +151,7 @@
                     A friend told me
                   </label>
                 </div>
-
+ 
                 <div class="form-check">
                   <input class="form-check-input" type="radio"
                          name="source" id="source-class" value="class">
@@ -158,7 +159,7 @@
                     Classmate / classroom
                   </label>
                 </div>
-
+ 
                 <div class="form-check">
                   <input class="form-check-input" type="radio"
                          name="source" id="source-search" value="search">
@@ -168,7 +169,7 @@
                 </div>
               </fieldset>
             </div>
-
+ 
             <div class="col-12">
               <label for="excerpt" class="form-label">
                 The Excerpt (and where it's from)
@@ -176,11 +177,11 @@
               <textarea class="form-control" id="excerpt"
                         name="excerpt" rows="4"
                         placeholder="Paste the line here, along with the book and author..."
-                        required></textarea>
+                        maxlength="500" required></textarea>
               <span class="error-msg text-danger small"
                     id="excerptError" role="alert"></span>
             </div>
-
+ 
             <div class="col-12">
               <div class="form-check">
                 <input class="form-check-input" type="checkbox"
@@ -192,7 +193,7 @@
               <span class="error-msg text-danger small"
                     id="permissionError" role="alert"></span>
             </div>
-
+ 
             <div class="col-12 d-flex flex-wrap gap-2">
               <button type="submit" class="btn btn-primary btn-lg">
                 Submit Excerpt
@@ -202,69 +203,99 @@
                 Clear
               </button>
             </div>
-
+ 
           </div>
         </form>
-
+ 
       
         <section class="card card-body p-3 p-md-4 mt-4">
           <h2 class="h3 mb-2">Create an Account</h2>
           <p class="text-body-secondary">
-            Try our form validation feature.
+            Want to keep track of your submissions? Create a free account.
           </p>
-
-          <form id="accountForm" novalidate>
-
-            <div class="mb-3">
-              <label for="signupEmail" class="form-label">Email</label>
-              <input type="email" class="form-control"
-                     id="signupEmail" required>
-              <span class="error-msg text-danger small"
-                    id="signupEmailError" role="alert"></span>
-            </div>
-
-            <div class="mb-3">
-              <label for="password" class="form-label">Password</label>
-              <input type="password" class="form-control"
-                     id="password" minlength="8" required>
-              <span class="error-msg text-danger small"
-                    id="passwordError" role="alert"></span>
-            </div>
-
-            <div class="mb-3">
-              <label for="confirmPassword" class="form-label">
-                Confirm Password
-              </label>
-              <input type="password" class="form-control"
-                     id="confirmPassword" required>
-              <span class="error-msg text-danger small"
-                    id="confirmPasswordError" role="alert"></span>
-            </div>
-
-            <div id="accountSuccess"
-                 class="alert alert-success d-none"
-                 role="status">
-              All fields are valid!
-            </div>
-
-            <button type="submit" class="btn btn-primary">
-              Validate Account
+          <div>
+            <button type="button" id="openAccountBtn" class="btn btn-primary">
+              Sign Up
             </button>
-
-          </form>
+          </div>
         </section>
-
+ 
       </div>
     </div>
   </main>
-
+ 
+  <div id="accountModal" class="popup-modal" role="dialog" aria-modal="true" aria-labelledby="accountModalTitle" aria-hidden="true">
+    <div class="popup-content card">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2 id="accountModalTitle" class="h4 mb-0">Create an Account</h2>
+          <button type="button" id="closeAccountBtn" class="btn-close" aria-label="Close sign up window"></button>
+        </div>
+ 
+        <form id="accountForm" novalidate>
+ 
+          <div class="mb-3">
+            <label for="username" class="form-label">Username</label>
+            <input type="text" class="form-control"
+                   id="username" maxlength="20"
+                   autocomplete="username" data-no-spaces required>
+            <div class="form-text">3–20 characters: Latin letters, digits and "_". No spaces.</div>
+            <span class="error-msg text-danger small"
+                  id="usernameError" role="alert"></span>
+          </div>
+ 
+          <div class="mb-3">
+            <label for="signupEmail" class="form-label">Email</label>
+            <input type="email" class="form-control"
+                   id="signupEmail" maxlength="254"
+                   autocomplete="email" data-no-spaces required>
+            <span class="error-msg text-danger small"
+                  id="signupEmailError" role="alert"></span>
+          </div>
+ 
+          <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" class="form-control"
+                   id="password" maxlength="64"
+                   autocomplete="new-password" data-no-spaces required>
+            <div class="form-text">8–64 characters, no spaces: uppercase, lowercase, digit and a symbol.</div>
+            <span class="error-msg text-danger small"
+                  id="passwordError" role="alert"></span>
+          </div>
+ 
+          <div class="mb-3">
+            <label for="confirmPassword" class="form-label">
+              Confirm Password
+            </label>
+            <input type="password" class="form-control"
+                   id="confirmPassword" maxlength="64"
+                   autocomplete="new-password" data-no-spaces required>
+            <span class="error-msg text-danger small"
+                  id="confirmPasswordError" role="alert"></span>
+          </div>
+ 
+          <div id="accountSuccess"
+               class="alert alert-success d-none"
+               role="status">
+          </div>
+ 
+          <button type="submit" class="btn btn-primary">
+            Create Account
+          </button>
+ 
+        </form>
+      </div>
+    </div>
+  </div>
+ 
   <footer class="bg-dark border-top text-center text-body-secondary small py-4 px-3 px-sm-2 mt-5">
     <p class="mb-1">Marginalia — Assignment #4 Project | Group 2503</p>
     <p class="mb-0">
       Team Members: Akerke Ramazan &amp; Gabidin Kaldybek
     </p>
   </footer>
-
+ 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+ 

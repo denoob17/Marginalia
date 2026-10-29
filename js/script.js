@@ -288,50 +288,50 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
  
-  const modal = document.getElementById('popupModal');
-  const openButton = document.getElementById('openPopupBtn');
-  const closeButton = document.getElementById('closePopupBtn');
+  function setupModal(modalId, openButtonId, closeButtonId, onClose) {
+    const modalElement = document.getElementById(modalId);
+    const openBtn = document.getElementById(openButtonId);
+    const closeBtn = document.getElementById(closeButtonId);
  
-  const openModal = () => {
-    if (!modal) return;
+    if (!modalElement) return null;
  
-    modal.setAttribute('aria-hidden', 'false');
-    modal.style.display = 'flex';
-  };
+    const open = () => {
+      modalElement.setAttribute('aria-hidden', 'false');
+      modalElement.style.display = 'flex';
  
-  const closeModal = () => {
-    if (!modal) return;
+      const firstField = modalElement.querySelector('input, textarea, select, a[href]');
+      if (firstField) firstField.focus();
+    };
  
-    modal.setAttribute('aria-hidden', 'true');
-    modal.style.display = 'none';
-  };
+    const close = () => {
+      modalElement.setAttribute('aria-hidden', 'true');
+      modalElement.style.display = 'none';
  
-  if (modal) {
-    modal.style.display = 'none';
-    modal.setAttribute('aria-hidden', 'true');
-  }
+      if (onClose) onClose();
+      if (openBtn) openBtn.focus();
+    };
  
-  if (openButton && modal) {
-    openButton.addEventListener('click', openModal);
-  }
+    modalElement.style.display = 'none';
+    modalElement.setAttribute('aria-hidden', 'true');
  
-  if (closeButton) {
-    closeButton.addEventListener('click', closeModal);
-  }
+    if (openBtn) openBtn.addEventListener('click', open);
+    if (closeBtn) closeBtn.addEventListener('click', close);
  
-  if (modal) {
-    modal.addEventListener('click', (event) => {
-      if (event.target === modal) {
-        closeModal();
-      }
+    modalElement.addEventListener('click', (event) => {
+      if (event.target === modalElement) close();
     });
  
     document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape') {
-        closeModal();
+      if (event.key === 'Escape' && modalElement.getAttribute('aria-hidden') === 'false') {
+        close();
       }
     });
+ 
+    return { open, close };
   }
+ 
+  setupModal('popupModal', 'openPopupBtn', 'closePopupBtn');
+ 
  
   function showError(element, message) {
     if (element) {
@@ -347,117 +347,291 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
  
+
+  function validateName(rawValue) {
+    const value = rawValue.trim();
+ 
+    if (!value) return 'Name is required.';
+    if (value.length < 2) return 'Name must contain at least 2 characters.';
+    if (value.length > 50) return 'Name must be 50 characters or fewer.';
+    if (/\s{2,}/.test(value)) return 'Use only one space between words.';
+    if (!/^\p{L}+(?:[ '’-]\p{L}+)*$/u.test(value)) {
+      return 'Name may contain only letters (and one space, hyphen or apostrophe between words).';
+    }
+ 
+    return '';
+  }
+ 
+  
+  function validateUsername(value) {
+    if (!value) return 'Username is required.';
+    if (/\s/.test(value)) return 'Username must not contain spaces.';
+    if (value.length < 3) return 'Username must contain at least 3 characters.';
+    if (value.length > 20) return 'Username must be 20 characters or fewer.';
+    if (!/^[A-Za-z]/.test(value)) return 'Username must start with a letter.';
+    if (!/^[A-Za-z0-9_]+$/.test(value)) {
+      return 'Username may contain only Latin letters, digits and "_".';
+    }
+ 
+    return '';
+  }
+ 
+  const typoDomains = ['gmial.com', 'gmai.com', 'gamil.com', 'gmail.con', 'gmail.co', 'gmail.cm'];
+ 
+  function validateEmail(rawValue) {
+    const value = rawValue.trim();
+ 
+    if (!value) return 'Email is required.';
+    if (/\s/.test(value)) return 'Email must not contain spaces.';
+    if (value.length > 254) return 'Email is too long (maximum 254 characters).';
+ 
+    const parts = value.split('@');
+    if (parts.length !== 2) return 'Email must contain exactly one "@".';
+ 
+    const local = parts[0];
+    const domain = parts[1].toLowerCase();
+ 
+    if (!local) return 'Enter the part of the email before "@".';
+    if (local.length > 64) return 'The part before "@" is too long (maximum 64 characters).';
+    if (!/^[A-Za-z0-9._%+-]+$/.test(local)) {
+      return 'Email contains invalid characters. Use letters, digits and . _ % + - only.';
+    }
+    if (local.startsWith('.') || local.endsWith('.') || local.includes('..')) {
+      return 'Dots in the email cannot be first, last or doubled.';
+    }
+ 
+    if (!/^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(domain)) {
+      return 'The part after "@" is not a valid domain (for example gmail.com).';
+    }
+ 
+    const labels = domain.split('.');
+    if (labels.some((label) => label.startsWith('-') || label.endsWith('-'))) {
+      return 'Domain parts cannot start or end with a hyphen.';
+    }
+    if (!/^[a-z]{2,}$/.test(labels[labels.length - 1])) {
+      return 'The domain ending is not valid (for example .com).';
+    }
+ 
+    if (typoDomains.includes(domain)) {
+      return 'Did you mean "gmail.com"? Please check the domain.';
+    }
+ 
+   
+    if (domain === 'gmail.com') {
+      if (!/^[A-Za-z0-9.]+$/.test(local)) {
+        return 'Gmail addresses may contain only letters, digits and dots before "@".';
+      }
+      if (local.length < 6 || local.length > 30) {
+        return 'Gmail addresses must have 6–30 characters before "@".';
+      }
+    }
+ 
+    return '';
+  }
+ 
+  function validatePassword(value, username) {
+    if (!value) return 'Password is required.';
+    if (/\s/.test(value)) return 'Password must not contain spaces.';
+    if (value.length < 8) return 'Password must contain at least 8 characters.';
+    if (value.length > 64) return 'Password must be 64 characters or fewer.';
+    if (!/^[\x21-\x7E]+$/.test(value)) {
+      return 'Password may contain only Latin letters, digits and standard symbols.';
+    }
+    if (!/[a-z]/.test(value)) return 'Password needs at least one lowercase letter.';
+    if (!/[A-Z]/.test(value)) return 'Password needs at least one uppercase letter.';
+    if (!/\d/.test(value)) return 'Password needs at least one digit.';
+    if (!/[^A-Za-z0-9]/.test(value)) return 'Password needs at least one symbol (for example ! ? # $).';
+    if (username && value.toLowerCase().includes(username.toLowerCase())) {
+      return 'Password must not contain your username.';
+    }
+ 
+    return '';
+  }
+ 
+  function validateExcerpt(rawValue) {
+    const value = rawValue.trim();
+ 
+    if (!value) return 'Please enter your excerpt.';
+    if (value.length < 10) return 'The excerpt is too short (at least 10 characters).';
+    if (value.length > 500) return 'The excerpt is too long (maximum 500 characters).';
+ 
+    return '';
+  }
+ 
+  const readValue = (id) => {
+    const element = document.getElementById(id);
+    return element ? element.value : '';
+  };
+ 
+
+  const fieldValidators = {
+    name: validateName,
+    email: validateEmail,
+    excerpt: validateExcerpt,
+    username: validateUsername,
+    signupEmail: validateEmail,
+    password: (value) => validatePassword(value, readValue('username')),
+    confirmPassword: (value) => {
+      if (!value) return 'Please confirm your password.';
+      if (value !== readValue('password')) return 'Passwords do not match.';
+      return '';
+    }
+  };
+ 
+  
+  const getErrorElement = (input) => document.getElementById(`${input.id}Error`);
+ 
+  function clearFieldState(input) {
+    input.classList.remove('is-invalid', 'is-valid');
+    clearError(getErrorElement(input));
+  }
+ 
+  function validateInput(input) {
+    const check = fieldValidators[input.id];
+    const message = check ? check(input.value) : '';
+ 
+    if (message) {
+      showError(getErrorElement(input), message);
+      input.classList.add('is-invalid');
+      input.classList.remove('is-valid');
+    } else {
+      clearError(getErrorElement(input));
+      input.classList.remove('is-invalid');
+      input.classList.add('is-valid');
+    }
+ 
+    return message === '';
+  }
+ 
+  
+  Object.keys(fieldValidators).forEach((id) => {
+    const input = document.getElementById(id);
+    if (!input) return;
+ 
+    input.addEventListener('input', () => {
+      
+      if (input.hasAttribute('data-no-spaces')) {
+        const cleaned = input.value.replace(/\s/g, '');
+ 
+        if (cleaned !== input.value) {
+          input.value = cleaned;
+          showError(getErrorElement(input), 'Spaces are not allowed in this field.');
+          input.classList.add('is-invalid');
+          return;
+        }
+      }
+ 
+      clearFieldState(input);
+    });
+ 
+    input.addEventListener('blur', () => {
+      if (input.value !== '') validateInput(input);
+    });
+  });
+ 
+  function resetValidationState(form) {
+    form.querySelectorAll('input, textarea').forEach(clearFieldState);
+    form.querySelectorAll('.error-msg').forEach(clearError);
+  }
+ 
+  function focusFirstInvalid(form) {
+    const firstInvalid = form.querySelector('.is-invalid');
+    if (firstInvalid) firstInvalid.focus();
+  }
   const contactForm = document.getElementById('contactForm');
  
   if (contactForm) {
+    const permission = document.getElementById('permission');
+    const permissionError = document.getElementById('permissionError');
+ 
+    contactForm.addEventListener('reset', () => resetValidationState(contactForm));
+ 
+    if (permission) {
+      permission.addEventListener('change', () => clearError(permissionError));
+    }
+ 
     contactForm.addEventListener('submit', (event) => {
       event.preventDefault();
  
-      contactForm.querySelectorAll('.error-msg').forEach(clearError);
- 
-      const name = document.getElementById('name');
-      const email = document.getElementById('email');
-      const excerpt = document.getElementById('excerpt');
-      const permission = document.getElementById('permission');
       const formSuccess = document.getElementById('formSuccess');
+      if (formSuccess) formSuccess.hidden = true;
  
-      let isValid = true;
  
-      const showFormError = (id, message) => {
-        showError(document.getElementById(id), message);
-        isValid = false;
-      };
+      const fields = ['name', 'email', 'excerpt']
+        .map((id) => document.getElementById(id))
+        .filter(Boolean);
+      const fieldsAreValid = fields.map(validateInput).every(Boolean);
  
-      if (name && !name.value.trim()) {
-        showFormError('nameError', 'Name is required.');
-      }
- 
-      if (email) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
- 
-        if (!email.value.trim()) {
-          showFormError('emailError', 'Email is required.');
-        } else if (!emailRegex.test(email.value.trim())) {
-          showFormError('emailError', 'Please enter a valid email address.');
-        }
-      }
- 
-      if (excerpt && !excerpt.value.trim()) {
-        showFormError('excerptError', 'Please enter your excerpt.');
-      }
+      let permissionIsValid = true;
  
       if (permission && !permission.checked) {
-        showFormError('permissionError', 'Please confirm your permission.');
+        showError(permissionError, 'Please confirm your permission.');
+        permissionIsValid = false;
       }
  
-      if (isValid) {
-        if (formSuccess) {
-          formSuccess.hidden = false;
-          formSuccess.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center'
-          });
-        }
- 
-        contactForm.reset();
+      if (!fieldsAreValid || !permissionIsValid) {
+        focusFirstInvalid(contactForm);
+        return;
       }
+ 
+      if (formSuccess) {
+        formSuccess.hidden = false;
+        formSuccess.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+      }
+ 
+      contactForm.reset();
     });
   }
  
+  
   const accountForm = document.getElementById('accountForm');
  
   if (accountForm) {
+    const accountSuccess = document.getElementById('accountSuccess');
+ 
+    const hideAccountSuccess = () => {
+      if (accountSuccess) {
+        accountSuccess.hidden = true;
+        accountSuccess.classList.add('d-none');
+      }
+    };
+ 
+    const accountModal = setupModal('accountModal', 'openAccountBtn', 'closeAccountBtn', () => {
+      accountForm.reset();
+      hideAccountSuccess();
+    });
+ 
+    accountForm.addEventListener('reset', () => resetValidationState(accountForm));
+ 
     accountForm.addEventListener('submit', (event) => {
       event.preventDefault();
  
-      accountForm.querySelectorAll('.error-msg').forEach(clearError);
+      const fields = ['username', 'signupEmail', 'password', 'confirmPassword']
+        .map((id) => document.getElementById(id))
+        .filter(Boolean);
+      const allValid = fields.map(validateInput).every(Boolean);
  
-      const email = document.getElementById('signupEmail');
-      const password = document.getElementById('password');
-      const confirmPassword = document.getElementById('confirmPassword');
-      const accountSuccess = document.getElementById('accountSuccess');
- 
-      let isValid = true;
- 
-      const showFormError = (id, message) => {
-        showError(document.getElementById(id), message);
-        isValid = false;
-      };
- 
-      if (email) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
- 
-        if (!email.value.trim()) {
-          showFormError('signupEmailError', 'Email is required.');
-        } else if (!emailRegex.test(email.value.trim())) {
-          showFormError('signupEmailError', 'Please enter a valid email address.');
-        }
+      if (!allValid) {
+        focusFirstInvalid(accountForm);
+        return;
       }
  
-      if (password) {
-        if (!password.value) {
-          showFormError('passwordError', 'Password is required.');
-        } else if (password.value.length < 8) {
-          showFormError('passwordError', 'Password must contain at least 8 characters.');
-        }
+      const username = readValue('username');
+ 
+      if (accountSuccess) {
+        accountSuccess.textContent = `Account created! Welcome, ${username}.`;
+        accountSuccess.hidden = false;
+        accountSuccess.classList.remove('d-none');
       }
  
-      if (confirmPassword && password) {
-        if (!confirmPassword.value) {
-          showFormError('confirmPasswordError', 'Please confirm your password.');
-        } else if (confirmPassword.value !== password.value) {
-          showFormError('confirmPasswordError', 'Passwords do not match.');
-        }
-      }
+      accountForm.reset();
  
-      if (isValid) {
-        if (accountSuccess) {
- 
-          accountSuccess.hidden = false;
-          accountSuccess.classList.remove('d-none');
-        }
- 
-        accountForm.reset();
+      
+      if (accountModal) {
+        window.setTimeout(accountModal.close, 1800);
       }
     });
   }
@@ -480,8 +654,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (event.target.closest('input, textarea, select, [contenteditable="true"], .carousel')) return;
  
  
-      const popup = document.getElementById('popupModal');
-      if (popup && popup.getAttribute('aria-hidden') === 'false') return;
+      if (document.querySelector('.popup-modal[aria-hidden="false"]')) return;
  
       const items = getItems();
       if (items.length === 0) return;
@@ -597,7 +770,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   ];
  
-  // ---------- Reading log: render + filter + stats ----------
+  
   const readingLogBody = document.getElementById('readingLogBody');
   const statusFilterButtons = document.querySelectorAll('#statusFilters button');
   const readingStats = document.getElementById('readingStats');
@@ -608,8 +781,7 @@ document.addEventListener('DOMContentLoaded', () => {
     Reading: 'badge text-bg-primary',
     'To-Read': 'badge text-bg-secondary'
   };
- 
-  // Builds one <tr> for a single book object
+
   function createReadingRow(book) {
     const row = document.createElement('tr');
  
@@ -632,14 +804,13 @@ document.addEventListener('DOMContentLoaded', () => {
     return row;
   }
  
-  // Clears the table and draws the given list of books.
-  // map() turns every book object into a table row.
+  
   function renderReadingLog(books) {
     readingLogBody.replaceChildren();
     readingLogBody.append(...books.map(createReadingRow));
   }
  
-  // switch chooses the filter; filter() keeps only matching books
+  
   function getBooksByStatus(status) {
     switch (status) {
       case 'Finished':
@@ -653,7 +824,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
  
-  // reduce() collapses the array into one object: how many books per status
+ 
   function renderReadingStats() {
     if (!readingStats) return;
  
@@ -669,7 +840,7 @@ document.addEventListener('DOMContentLoaded', () => {
       `To-Read: ${counts['To-Read'] || 0}`;
   }
  
-  // map() extracts just the authors, join() makes one string
+  
   function renderReadingAuthors() {
     if (!readingAuthors) return;
  
@@ -686,7 +857,7 @@ document.addEventListener('DOMContentLoaded', () => {
       button.addEventListener('click', () => {
         renderReadingLog(getBooksByStatus(button.dataset.status));
  
-        // highlight the active filter button
+      
         statusFilterButtons.forEach((other) => {
           const isActive = other === button;
           other.classList.toggle('active', isActive);
@@ -842,7 +1013,6 @@ document.addEventListener('DOMContentLoaded', () => {
  
   const galleryBooksContainer = document.getElementById('galleryBooksContainer');
  
-  // Builds one gallery column (card) for a single book object
   function createGalleryCard(book) {
     const column = document.createElement('div');
     column.className = 'col-12 col-sm-6 col-lg-4';
@@ -879,7 +1049,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (galleryBooksContainer && !galleryBooksContainer.dataset.rendered) {
     galleryBooksContainer.dataset.rendered = 'true';
  
-    // map() turns every book object into a card element
+    
     galleryBooksContainer.append(...galleryBooks.map(createGalleryCard));
   }
  
@@ -924,3 +1094,4 @@ document.addEventListener('DOMContentLoaded', () => {
     }, { once: true });
   }
 });
+ 
