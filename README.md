@@ -11,6 +11,7 @@ The idea is inspired by the notes and thoughts people write in the margins of bo
 * Book excerpts
 * Contact page
 * Simple responsive design
+* **Assignment 6 (jQuery):** live reading-log filter, autocomplete search, search highlighting, scroll progress bar, animated number counter, submit spinner, toast notifications, copy-to-clipboard buttons, lazy image loading
 
 ### 🛠️ Built With
 
@@ -19,6 +20,7 @@ The idea is inspired by the notes and thoughts people write in the margins of bo
 
 ### USED frameworks or libraries
 * Bootstrap
+* jQuery 4 (loaded from the official CDN)
 
 ### 🌐 Live Website
 

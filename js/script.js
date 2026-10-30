@@ -1,4 +1,6 @@
-document.addEventListener('DOMContentLoaded', () => {
+(function () {
+  'use strict';
+
   const root = document.documentElement;
   const body = document.body;
   const pageName = window.location.pathname.split('/').pop().toLowerCase();
@@ -184,6 +186,23 @@ document.addEventListener('DOMContentLoaded', () => {
   }
  
   function applyTheme() {
+    // Day mode: the dark background themes and Halloween mode are switched off
+    if (root.getAttribute('data-bs-theme') === 'light') {
+      root.style.removeProperty('--bg');
+      root.style.removeProperty('--bs-body-bg');
+      body.classList.remove('halloween-mode');
+ 
+      if (isHalloween) {
+        isHalloween = false;
+        localStorage.setItem('marginaliaHalloween', 'false');
+        stopMusic();
+      }
+ 
+      stopGhost();
+      updateMusicButton();
+      return;
+    }
+ 
     root.style.setProperty('--bg', themes[themeIndex]);
     root.style.setProperty('--bs-body-bg', themes[themeIndex]);
     body.classList.toggle('halloween-mode', isHalloween);
@@ -247,6 +266,8 @@ document.addEventListener('DOMContentLoaded', () => {
       updateMusicButton();
     }
   });
+ 
+  window.marginaliaApplyTheme = applyTheme; // used by the jQuery day/night switch
  
   applyTheme();
  
@@ -574,6 +595,12 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
  
+      if (window.jQuery) {
+        // Assignment 6 (Task 6): jQuery shows the spinner, then the success message
+        contactForm.dispatchEvent(new CustomEvent('mq:valid'));
+        return;
+      }
+ 
       if (formSuccess) {
         formSuccess.hidden = false;
         formSuccess.scrollIntoView({
@@ -620,6 +647,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
  
       const username = readValue('username');
+ 
+      if (window.jQuery) {
+        accountForm.dispatchEvent(new CustomEvent('mq:valid', { detail: { username } }));
+        return;
+      }
  
       if (accountSuccess) {
         accountSuccess.textContent = `Account created! Welcome, ${username}.`;
@@ -867,6 +899,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
  
+  const LAZY_PLACEHOLDER = "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 3 4'%3E%3Crect width='3' height='4' fill='%2334302a'/%3E%3C/svg%3E";
+ 
   const carouselBooks = [
     {
       src: 'images/anna-karenina.jpg',
@@ -949,9 +983,17 @@ document.addEventListener('DOMContentLoaded', () => {
       }
  
       const img = document.createElement('img');
-      img.src = book.src;
       img.alt = book.alt;
       img.className = 'd-block w-100 carousel-img';
+ 
+      // Task 9: only the first slide loads right away, the rest wait for jQuery
+      if (index === 0 || !window.jQuery) {
+        img.src = book.src;
+      } else {
+        img.src = LAZY_PLACEHOLDER;
+        img.dataset.src = book.src;
+        img.classList.add('lazy-slide');
+      }
  
       const caption = document.createElement('div');
       caption.className = 'carousel-caption d-none d-md-block bg-dark bg-opacity-75 rounded py-2';
@@ -1021,9 +1063,17 @@ document.addEventListener('DOMContentLoaded', () => {
     card.className = 'card h-100';
  
     const img = document.createElement('img');
-    img.src = book.src;
     img.alt = book.alt;
     img.className = 'card-img-top gallery-img';
+ 
+    // Task 9: lazy loading - the real file is stored in data-src until the card scrolls into view
+    if (window.jQuery) {
+      img.src = LAZY_PLACEHOLDER;
+      img.dataset.src = book.src;
+      img.classList.add('lazy');
+    } else {
+      img.src = book.src;
+    }
  
     const cardBody = document.createElement('div');
     cardBody.className = 'card-body';
@@ -1093,5 +1143,668 @@ document.addEventListener('DOMContentLoaded', () => {
       scoobyRunner.style.display = 'none';
     }, { once: true });
   }
+})();
+
+/* =====================================================================
+   ASSIGNMENT 6 - jQuery
+   Task 0  Setup
+   Part 1  Task 1 Live filter | Task 2 Autocomplete | Task 3 Highlighting
+   Part 2  Task 4 Scroll progress bar | Task 5 Number counter | Task 6 Submit spinner
+   Part 3  Task 7 Toasts | Task 8 Copy button | Task 9 Lazy loading
+   ===================================================================== */
+
+$(document).ready(function () {
+  // ---------------------------------------------------------------
+  // Task 0. Setup
+  // ---------------------------------------------------------------
+  console.log('jQuery is ready!');
+
+  const $win = $(window);
+  const $doc = $(document);
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Escape user text before it is put into a RegExp
+  const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  // Run a function at most once per animation frame (keeps scroll handlers cheap)
+  function rafThrottle(fn) {
+    let waiting = false;
+    return function () {
+      if (waiting) return;
+      waiting = true;
+      window.requestAnimationFrame(() => {
+        waiting = false;
+        fn();
+      });
+    };
+  }
+
+  // Is the element (partly) inside the visible part of the window?
+  function isInView($el, margin) {
+    if (!$el.length) return false;
+    const top = $el.offset().top;
+    const bottom = top + $el.outerHeight();
+    const viewTop = $win.scrollTop() - (margin || 0);
+    const viewBottom = $win.scrollTop() + $win.height() + (margin || 0);
+    return bottom >= viewTop && top <= viewBottom;
+  }
+
+  // ---------------------------------------------------------------
+  // Task 7. Notification system (toasts)
+  // Defined first because the other tasks use it.
+  // ---------------------------------------------------------------
+  const $toastBox = $('<div id="mq-toasts" aria-live="polite" aria-atomic="false"></div>').appendTo('body');
+  const toastIcons = { success: '✓', info: 'i', error: '!' };
+
+  function showToast(message, type) {
+    type = toastIcons[type] ? type : 'success';
+
+    const $toast = $('<div class="mq-toast" role="status"></div>')
+      .addClass('mq-toast-' + type)
+      .append($('<span class="mq-toast-icon" aria-hidden="true"></span>').text(toastIcons[type]))
+      .append($('<span class="mq-toast-msg"></span>').text(message))
+      .append('<button type="button" class="mq-toast-close" aria-label="Dismiss notification">&times;</button>')
+      .hide()
+      .appendTo($toastBox);
+
+    // fade in -> stay for 3.2 s -> fade out -> remove from the DOM
+    $toast.fadeIn(250).delay(3200).fadeOut(600, function () {
+      $(this).remove();
+    });
+
+    // limit the stack to 4 messages
+    $toastBox.children().slice(0, -4).remove();
+    return $toast;
+  }
+
+  $toastBox.on('click', '.mq-toast-close', function () {
+    $(this).closest('.mq-toast').stop(true).fadeOut(150, function () {
+      $(this).remove();
+    });
+  });
+
+  // ---------------------------------------------------------------
+  // Task 1. Real-time search and live filter (Excerpts page, reading log)
+  // ---------------------------------------------------------------
+  const $logSearch = $('#logSearch');
+
+  if ($logSearch.length) {
+    const $logCount = $('<p id="logCount" class="small text-body-secondary mb-2" aria-live="polite"></p>')
+      .insertAfter('#statusFilters');
+    const $logEmpty = $('<p id="logEmpty" class="text-body-secondary fst-italic" hidden>No books match your search.</p>')
+      .insertBefore('.table-responsive');
+
+    function applyLogFilter() {
+      const query = $logSearch.val().trim().toLowerCase();
+      const $rows = $('#readingLogBody tr');
+
+      // keep the rows whose text contains the query
+      const $matches = $rows.filter(function () {
+        return $(this).text().toLowerCase().indexOf(query) > -1;
+      });
+
+      $rows.not($matches).hide();
+      $matches.show();
+
+      $logEmpty.prop('hidden', $matches.length > 0);
+      $logCount.text(
+        query
+          ? 'Showing ' + $matches.length + ' of ' + $rows.length + ' books'
+          : ''
+      );
+    }
+
+    $logSearch.on('keyup input', applyLogFilter);
+
+    // the status buttons re-render the table, so apply the search again afterwards
+    $('#statusFilters').on('click', 'button', applyLogFilter);
+  }
+
+  // ---------------------------------------------------------------
+  // Task 2. Autocomplete search suggestions (Gallery page)
+  // ---------------------------------------------------------------
+  const $gallerySearch = $('#gallerySearch');
+
+  if ($gallerySearch.length) {
+    const $suggestList = $('#suggestList');
+    const entries = [];
+    let activeIndex = -1;
+    let shown = [];
+
+    // Build the suggestion data from the cards that are on the page
+    $('#galleryBooksContainer article.card').each(function () {
+      const $card = $(this);
+      const title = $card.find('.card-title').text();
+      const author = $card.find('.card-subtitle').text();
+
+      entries.push({ text: title, kind: 'Book', $cards: $card });
+
+      if (!entries.some((e) => e.kind === 'Author' && e.text === author)) {
+        const $sameAuthor = $('#galleryBooksContainer article.card').filter(function () {
+          return $(this).find('.card-subtitle').text() === author;
+        });
+        entries.push({ text: author, kind: 'Author', $cards: $sameAuthor });
+      }
+    });
+
+    function closeSuggestions() {
+      $suggestList.prop('hidden', true).empty();
+      $gallerySearch.attr('aria-expanded', 'false').removeAttr('aria-activedescendant');
+      activeIndex = -1;
+      shown = [];
+    }
+
+    function setActive(index) {
+      const $items = $suggestList.children();
+      $items.removeClass('active').attr('aria-selected', 'false');
+      activeIndex = index;
+
+      if (index >= 0) {
+        const $item = $items.eq(index).addClass('active').attr('aria-selected', 'true');
+        $gallerySearch.attr('aria-activedescendant', $item.attr('id'));
+      } else {
+        $gallerySearch.removeAttr('aria-activedescendant');
+      }
+    }
+
+    function renderSuggestions() {
+      const query = $gallerySearch.val().trim().toLowerCase();
+
+      if (!query) {
+        closeSuggestions();
+        return;
+      }
+
+      shown = entries.filter((e) => e.text.toLowerCase().indexOf(query) > -1).slice(0, 6);
+      $suggestList.empty();
+
+      if (!shown.length) {
+        $suggestList.append('<li class="mq-suggest-empty">No suggestions found</li>');
+      }
+
+      $.each(shown, function (i, entry) {
+        const at = entry.text.toLowerCase().indexOf(query);
+        const $li = $('<li class="mq-suggest-item" role="option" aria-selected="false"></li>')
+          .attr('id', 'suggest-' + i)
+          .data('index', i)
+          .append($('<span class="mq-suggest-kind"></span>').text(entry.kind))
+          .append(
+            $('<span class="mq-suggest-text"></span>')
+              .append(document.createTextNode(entry.text.slice(0, at)))
+              .append($('<strong></strong>').text(entry.text.slice(at, at + query.length)))
+              .append(document.createTextNode(entry.text.slice(at + query.length)))
+          );
+        $suggestList.append($li);
+      });
+
+      $suggestList.prop('hidden', false);
+      $gallerySearch.attr('aria-expanded', 'true');
+      activeIndex = -1;
+    }
+
+    function chooseSuggestion(entry) {
+      $gallerySearch.val(entry.text);
+      closeSuggestions();
+
+      const $first = entry.$cards.first();
+      $first[0].scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+
+      // pulse the chosen card(s)
+      entry.$cards.removeClass('mq-flash');
+      void entry.$cards[0].offsetWidth; // restart the CSS animation
+      entry.$cards.addClass('mq-flash');
+      window.setTimeout(() => entry.$cards.removeClass('mq-flash'), 2400);
+
+      showToast('Showing: ' + entry.text, 'info');
+      lazyLoadImages();
+    }
+
+    $gallerySearch.on('input', renderSuggestions);
+
+    $gallerySearch.on('keydown', function (event) {
+      if ($suggestList.prop('hidden')) return;
+
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        setActive(shown.length ? (activeIndex + 1) % shown.length : -1);
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        setActive(shown.length ? (activeIndex - 1 + shown.length) % shown.length : -1);
+      } else if (event.key === 'Enter') {
+        event.preventDefault();
+        const entry = shown[activeIndex >= 0 ? activeIndex : 0];
+        if (entry) chooseSuggestion(entry);
+      } else if (event.key === 'Escape') {
+        closeSuggestions();
+      }
+    });
+
+    // mousedown (not click) so the input does not lose focus first
+    $suggestList.on('mousedown', '.mq-suggest-item', function (event) {
+      event.preventDefault();
+      chooseSuggestion(shown[$(this).data('index')]);
+    });
+
+    $suggestList.on('mouseenter', '.mq-suggest-item', function () {
+      setActive($(this).data('index'));
+    });
+
+    $doc.on('click', function (event) {
+      if (!$(event.target).closest('.mq-search').length) closeSuggestions();
+    });
+  }
+
+  // ---------------------------------------------------------------
+  // Task 3. Search highlighting (About page)
+  // ---------------------------------------------------------------
+  const $pageSearch = $('#pageSearch');
+
+  if ($pageSearch.length) {
+    const $searchRoot = $('#main');
+    const $pageCount = $('#pageSearchCount');
+    let debounceTimer = null;
+
+    function setAccordion($item, open) {
+      $item.find('.accordion-header').toggleClass('active', open).attr('aria-expanded', String(open));
+      $item.find('.accordion-content')
+        .toggleClass('show', open)
+        .prop('hidden', !open)
+        .css('display', open ? 'block' : 'none');
+    }
+
+    // Replace every <mark> by its plain text again
+    function clearHighlights() {
+      $searchRoot.find('mark.mq-highlight').each(function () {
+        $(this).replaceWith(document.createTextNode($(this).text()));
+      });
+      $searchRoot[0].normalize(); // glue the split text nodes back together
+
+      // close the FAQ items that the search had opened
+      $searchRoot.find('.accordion-item.mq-auto-open').each(function () {
+        setAccordion($(this), false);
+        $(this).removeClass('mq-auto-open');
+      });
+    }
+
+    // Walk through the text nodes of an element and wrap the matches
+    function highlightIn($element, regex) {
+      $element.contents().each(function () {
+        if (this.nodeType === 3) { // text node
+          if (!this.nodeValue.trim()) return;
+          regex.lastIndex = 0;
+          if (!regex.test(this.nodeValue)) return;
+
+          const safeHtml = $('<div>').text(this.nodeValue).html(); // escape < > &
+          const marked = safeHtml.replace(regex, '<mark class="mq-highlight">$1</mark>');
+          $(this).replaceWith(marked);
+        } else if (this.nodeType === 1) { // element
+          const $el = $(this);
+          if ($el.is('script, style, textarea, input, select, mark') || $el.closest('.mq-no-highlight').length) return;
+          highlightIn($el, regex);
+        }
+      });
+    }
+
+    function runPageSearch() {
+      const term = $pageSearch.val().trim();
+      clearHighlights();
+
+      if (term.length < 2) {
+        $pageCount.text(term.length ? 'Type at least 2 characters.' : '');
+        return;
+      }
+
+      // the capture group lets "$1" keep the original upper/lower case
+      const regex = new RegExp('(' + escapeRegExp(term) + ')', 'gi');
+      highlightIn($searchRoot, regex);
+
+      const total = $searchRoot.find('mark.mq-highlight').length;
+
+      // open FAQ answers that contain a match
+      $searchRoot.find('.accordion-item').each(function () {
+        const $item = $(this);
+        if ($item.find('mark.mq-highlight').length && !$item.find('.accordion-header').hasClass('active')) {
+          setAccordion($item, true);
+          $item.addClass('mq-auto-open');
+        }
+      });
+
+      $pageCount.text(
+        total
+          ? total + (total === 1 ? ' match' : ' matches') + ' for “' + term + '”'
+          : 'No matches for “' + term + '”'
+      );
+    }
+
+    $pageSearch.on('input', function () {
+      window.clearTimeout(debounceTimer);
+      debounceTimer = window.setTimeout(runPageSearch, 150);
+    });
+
+    // Enter jumps to the first match
+    $pageSearch.on('keydown', function (event) {
+      if (event.key !== 'Enter') return;
+      event.preventDefault();
+      const first = $searchRoot.find('mark.mq-highlight').first()[0];
+      if (first) first.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+    });
+  }
+
+  // ---------------------------------------------------------------
+  // Task 4. Colourful scroll progress bar (every page)
+  // ---------------------------------------------------------------
+  const $progress = $(
+    '<div id="mq-progress" role="presentation">' +
+      '<div class="mq-progress-bar"></div>' +
+      '<span class="mq-progress-label" aria-hidden="true">0%</span>' +
+    '</div>'
+  ).prependTo('body');
+  const $progressBar = $progress.find('.mq-progress-bar');
+  const $progressLabel = $progress.find('.mq-progress-label');
+
+  function updateProgress() {
+    const scrollable = $doc.height() - $win.height();
+    const percent = scrollable > 0 ? Math.min(100, Math.max(0, ($win.scrollTop() / scrollable) * 100)) : 0;
+
+    $progressBar.css('width', percent + '%');
+    $progressLabel.text(Math.round(percent) + '%');
+    $progress.toggleClass('is-active', percent > 1);
+    $progress.toggleClass('is-complete', percent >= 99.5);
+  }
+
+  $win.on('scroll resize', rafThrottle(updateProgress));
+  updateProgress();
+
+  // ---------------------------------------------------------------
+  // Task 5. Animated number counter (Home page, "Marginalia in Numbers")
+  // ---------------------------------------------------------------
+  const $counters = $('.mq-stat-number');
+
+  function animateCounter($el) {
+    const target = Number($el.data('target')) || 0;
+    const suffix = $el.data('suffix') || '';
+    const format = (n) => Math.round(n).toLocaleString('en-US') + suffix;
+
+    $el.data('counted', true);
+
+    if (reduceMotion) {
+      $el.text(format(target));
+      return;
+    }
+
+    // animate a plain object from 0 to the target and print every step
+    $({ value: 0 }).animate({ value: target }, {
+      duration: 2000,
+      easing: 'swing',
+      step: function (now) {
+        $el.text(format(now));
+      },
+      complete: function () {
+        $el.text(format(target));
+      }
+    });
+  }
+
+  function checkCounters() {
+    $counters.each(function () {
+      const $el = $(this);
+      if (!$el.data('counted') && isInView($el, -40)) animateCounter($el);
+    });
+  }
+
+  if ($counters.length) {
+    $win.on('scroll resize', rafThrottle(checkCounters));
+    checkCounters();
+  }
+
+  // ---------------------------------------------------------------
+  // Task 6. Loading spinner on submit (contact form + sign-up form)
+  // ---------------------------------------------------------------
+  // Shows "Please wait...", disables the button, and after ~2 s (a fake server call)
+  // restores the button and runs the callback.
+  function submitWithSpinner($form, callback) {
+    const $submit = $form.find('[type="submit"]');
+    const $others = $form.find('button').not($submit);
+    const originalHtml = $submit.html();
+
+    $submit
+      .prop('disabled', true)
+      .attr('aria-busy', 'true')
+      .html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Please wait…');
+    $others.prop('disabled', true);
+
+    window.setTimeout(function () {
+      $submit.prop('disabled', false).removeAttr('aria-busy').html(originalHtml);
+      $others.prop('disabled', false);
+      callback();
+    }, 2000);
+  }
+
+  // Contact form: the original validation (above) fires "mq:valid" once everything is correct
+  $('#contactForm').on('mq:valid', function () {
+    const $form = $(this);
+
+    submitWithSpinner($form, function () {
+      const $success = $('#formSuccess').prop('hidden', false);
+      $success[0].scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+      $form[0].reset();
+      showToast('Form submitted successfully. Thank you!', 'success');
+    });
+  });
+
+  // Sign-up form (modal on the Contact page)
+  $('#accountForm').on('mq:valid', function (event) {
+    const $form = $(this);
+    const username = event.originalEvent.detail.username;
+
+    submitWithSpinner($form, function () {
+      $('#accountSuccess')
+        .text('Account created! Welcome, ' + username + '.')
+        .prop('hidden', false)
+        .removeClass('d-none');
+      $form[0].reset();
+      showToast('Account created. Welcome, ' + username + '!', 'success');
+
+      // close the modal after a moment (re-uses the existing close button)
+      window.setTimeout(() => $('#closeAccountBtn').trigger('click'), 1800);
+    });
+  });
+
+  // ---------------------------------------------------------------
+  // Task 8. "Copy" button next to the quotes (Home + Excerpts pages)
+  // ---------------------------------------------------------------
+  const ICON_COPY =
+    '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" ' +
+    'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<rect x="9" y="9" width="12" height="12" rx="2"></rect>' +
+    '<path d="M5 15V5a2 2 0 0 1 2-2h10"></path></svg>';
+  const ICON_CHECK =
+    '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" ' +
+    'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>';
+
+  let copyingFromButton = false;
+
+  // Copy text with the Clipboard API; fall back to execCommand when it is not available
+  function copyText(text) {
+    const result = $.Deferred();
+
+    function fallback() {
+      const $helper = $('<textarea readonly aria-hidden="true"></textarea>')
+        .val(text)
+        .css({ position: 'fixed', top: 0, left: 0, opacity: 0 })
+        .appendTo('body');
+      $helper[0].select();
+
+      let ok = false;
+      try {
+        ok = document.execCommand('copy');
+      } catch (error) {
+        ok = false;
+      }
+      $helper.remove();
+      return ok ? result.resolve() : result.reject();
+    }
+
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(result.resolve, fallback);
+    } else {
+      fallback();
+    }
+
+    return result.promise();
+  }
+
+  // Put a copy button beside every quote card
+  $('.mq-card blockquote').each(function () {
+    const $quote = $(this).addClass('mq-copyable');
+
+    $quote.wrap('<div class="mq-quote-row"></div>');
+
+    $('<span class="mq-copy-wrap"></span>')
+      .append(
+        $('<button type="button" class="mq-copy-btn" aria-label="Copy quote to clipboard" title="Copy"></button>')
+          .html(ICON_COPY)
+      )
+      .append('<span class="mq-tooltip" role="status">Copied to clipboard!</span>')
+      .insertAfter($quote);
+  });
+
+  $doc.on('click', '.mq-copy-btn', function () {
+    const $btn = $(this);
+    const $row = $btn.closest('.mq-quote-row');
+    const quote = $row.find('blockquote').text().trim();
+    const source = $row.next('p').text().trim(); // "— Leo Tolstoy"
+    const $tooltip = $btn.siblings('.mq-tooltip');
+
+    copyingFromButton = true;
+    copyText(source ? quote + ' ' + source : quote)
+      .done(function () {
+        window.clearTimeout($btn.data('timer'));
+
+        $btn.addClass('is-copied').html(ICON_CHECK).attr('aria-label', 'Copied');
+        $tooltip.stop(true, true).fadeIn(150);
+        showToast('Quote copied to clipboard', 'success');
+
+        // back to the normal icon after 2 s
+        $btn.data('timer', window.setTimeout(function () {
+          $btn.removeClass('is-copied').html(ICON_COPY).attr('aria-label', 'Copy quote to clipboard');
+          $tooltip.fadeOut(250);
+        }, 2000));
+      })
+      .fail(function () {
+        showToast('Could not copy. Please select the text and press Ctrl+C.', 'error');
+      })
+      .always(function () {
+        copyingFromButton = false;
+      });
+  });
+
+  // Also react when a visitor copies a quote by hand (select + Ctrl+C)
+  $doc.on('copy', function () {
+    if (copyingFromButton) return;
+    const selection = window.getSelection();
+    if (selection && !selection.isCollapsed && $(selection.anchorNode).closest('.mq-copyable').length) {
+      showToast('Copied to clipboard!', 'success');
+    }
+  });
+
+  // ---------------------------------------------------------------
+  // Extra: Day / Night mode switch (button in the navbar, every page)
+  // ---------------------------------------------------------------
+  const MODE_KEY = 'marginaliaColorMode';
+  const ICON_SUN =
+    '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" ' +
+    'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle>' +
+    '<path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>';
+  const ICON_MOON =
+    '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" ' +
+    'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg>';
+
+  const $root = $('html');
+  const $modeBtn = $('<button type="button" class="mq-mode-btn"></button>');
+
+  function paintModeButton() {
+    const isLight = $root.attr('data-bs-theme') === 'light';
+    // the icon shows what a click will switch TO
+    $modeBtn
+      .html(isLight ? ICON_MOON : ICON_SUN)
+      .attr('aria-label', isLight ? 'Switch to night mode' : 'Switch to day mode')
+      .attr('title', isLight ? 'Night mode' : 'Day mode')
+      .attr('aria-pressed', String(isLight));
+  }
+
+  function setColorMode(mode, announce) {
+    // short colour transition, removed again afterwards
+    $root.addClass('mq-mode-anim');
+    window.setTimeout(() => $root.removeClass('mq-mode-anim'), 500);
+
+    $root.attr('data-bs-theme', mode);
+    try { localStorage.setItem(MODE_KEY, mode); } catch (error) { /* private mode: ignore */ }
+
+    if (window.marginaliaApplyTheme) window.marginaliaApplyTheme();
+    paintModeButton();
+
+    if (announce) showToast(mode === 'light' ? 'Day mode on' : 'Night mode on', 'info');
+  }
+
+  $('<li class="nav-item d-flex align-items-center ms-lg-2"></li>').append($modeBtn).appendTo('#mainNav .navbar-nav');
+  paintModeButton();
+
+  $modeBtn.on('click', function () {
+    setColorMode($root.attr('data-bs-theme') === 'light' ? 'dark' : 'light', true);
+  });
+
+  // ---------------------------------------------------------------
+  // Task 9. Image lazy loading (Home portraits, Gallery cards + carousel)
+  // ---------------------------------------------------------------
+  function loadImage($img) {
+    const realSrc = $img.attr('data-src');
+    if (!realSrc) return;
+
+    $img
+      .removeAttr('data-src')
+      .one('load', function () {
+        $img.removeClass('lazy lazy-slide').addClass('mq-loaded');
+      })
+      .attr('src', realSrc); // swap the placeholder for the real picture
+  }
+
+  function lazyLoadImages() {
+    $('img.lazy[data-src]').each(function () {
+      const $img = $(this);
+      const top = $img.offset().top;
+      const bottom = top + $img.height();
+      const viewTop = $win.scrollTop();
+      const viewBottom = viewTop + $win.height();
+      const margin = 150; // start loading a little before it is visible
+
+      if (bottom >= viewTop - margin && top <= viewBottom + margin) {
+        loadImage($img);
+      }
+    });
+  }
+
+  $win.on('scroll resize load', rafThrottle(lazyLoadImages));
+  lazyLoadImages();
+
+  // Carousel slides are hidden (offset() would be 0), so load them just before they are shown
+  const $carousel = $('#galleryCarousel');
+
+  if ($carousel.length) {
+    const $slideImages = $carousel.find('.carousel-item img');
+
+    function preloadAround(index) {
+      [index, index + 1].forEach(function (i) {
+        const $img = $slideImages.eq(i % $slideImages.length);
+        if ($img.length) loadImage($img);
+      });
+    }
+
+    preloadAround(0);
+
+    $carousel.on('slide.bs.carousel', function (event) {
+      const index = $carousel.find('.carousel-item').index(event.relatedTarget);
+      if (index > -1) preloadAround(index);
+    });
+  }
 });
- 
