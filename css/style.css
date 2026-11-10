@@ -511,11 +511,7 @@ body.halloween-mode #scooby-runner.running {
   border-radius: 4px;
 }
 
-/* =====================================================================
-   ASSIGNMENT 6 - jQuery features
-   ===================================================================== */
 
-/* ---- Task 4: scroll progress bar ---- */
 #mq-progress {
   position: fixed;
   top: 0;
@@ -531,7 +527,7 @@ body.halloween-mode #scooby-runner.running {
   position: relative;
   width: 0;
   height: 100%;
-  /* the gradient is as wide as the window, so new colours appear while you scroll */
+
   background-image: linear-gradient(90deg, #b5915b 0%, #d4a59a 35%, #b1c5a3 70%, #e6c9a0 100%);
   background-size: 100vw 100%;
   background-repeat: no-repeat;
@@ -539,7 +535,7 @@ body.halloween-mode #scooby-runner.running {
   box-shadow: 0 0 12px rgba(212, 165, 154, 0.65), 0 0 2px rgba(230, 201, 160, 0.9);
 }
 
-/* moving light that runs along the filled part */
+
 #mq-progress .mq-progress-bar::before {
   content: "";
   position: absolute;
@@ -550,7 +546,7 @@ body.halloween-mode #scooby-runner.running {
   animation: mqShimmer 2.2s linear infinite;
 }
 
-/* glowing dot at the tip */
+
 #mq-progress .mq-progress-bar::after {
   content: "";
   position: absolute;
@@ -600,7 +596,7 @@ body.halloween-mode #scooby-runner.running {
   50%      { transform: translateY(-50%) scale(1.5); }
 }
 
-/* ---- Task 5: number counter ---- */
+
 .mq-stat-number {
   font-family: Georgia, "Times New Roman", Times, serif;
   font-size: clamp(2.2rem, 6vw, 3.4rem);
@@ -613,7 +609,7 @@ body.halloween-mode #scooby-runner.running {
   padding: 1.75rem 1rem;
 }
 
-/* ---- Task 7: toasts ---- */
+
 #mq-toasts {
   position: fixed;
   left: 20px;
@@ -678,7 +674,7 @@ body.halloween-mode #scooby-runner.running {
 .mq-toast-error { border-left-color: #d4776a; }
 .mq-toast-error .mq-toast-icon { background: #d4776a; }
 
-/* ---- Task 8: copy button + tooltip ---- */
+
 .mq-quote-row {
   display: flex;
   align-items: flex-start;
@@ -752,7 +748,7 @@ body.halloween-mode #scooby-runner.running {
   border-top-color: #f5e6c8;
 }
 
-/* ---- Task 9: lazy images ---- */
+
 img.lazy,
 img.lazy-slide {
   opacity: 0.5;
@@ -768,7 +764,7 @@ img.mq-loaded {
   to   { opacity: 1; }
 }
 
-/* ---- Task 2: autocomplete dropdown ---- */
+
 .mq-suggest {
   position: absolute;
   top: 100%;
@@ -828,7 +824,7 @@ img.mq-loaded {
   20%, 60% { box-shadow: 0 0 0 4px rgba(181, 145, 91, 0.85), 0 0 24px rgba(181, 145, 91, 0.5); }
 }
 
-/* ---- Task 3: search highlight ---- */
+
 mark.mq-highlight {
   padding: 0 2px;
   border-radius: 3px;
@@ -836,7 +832,7 @@ mark.mq-highlight {
   color: #211f1d;
 }
 
-/* ---- Task 6: spinner button ---- */
+
 button[aria-busy="true"] {
   cursor: progress;
 }
@@ -851,9 +847,7 @@ button[aria-busy="true"] {
 }
 
 
-/* =====================================================================
-   Day / Night mode
-   ===================================================================== */
+
 html[data-bs-theme="light"] {
   --bg: #f6efe0;
   --bg-alt: #efe6d1;
@@ -879,7 +873,7 @@ html[data-bs-theme="light"] {
   --bs-link-hover-color-rgb: 110, 47, 36;
 }
 
-/* header and footer stay dark in day mode, so their text needs the light colours */
+
 html[data-bs-theme="light"] header .text-primary,
 html[data-bs-theme="light"] header .navbar-brand { color: #d4b283 !important; }
 html[data-bs-theme="light"] footer { --bs-secondary-color: #b8ae9a; }
@@ -896,11 +890,11 @@ html[data-bs-theme="light"] .mq-suggest { box-shadow: 0 10px 24px rgba(60, 45, 2
 html[data-bs-theme="light"] img.lazy,
 html[data-bs-theme="light"] img.lazy-slide { background-color: var(--bg-alt); }
 
-/* the dark background themes / Halloween do not exist in day mode */
+
 html[data-bs-theme="light"] #changeBgBtn,
 html[data-bs-theme="light"] #halloweenMusicBtn { display: none !important; }
 
-/* switch button */
+
 .mq-mode-btn {
   display: inline-flex;
   align-items: center;
@@ -930,3 +924,23 @@ html.mq-mode-anim *::after {
   html.mq-mode-anim * { transition: none !important; }
   .mq-mode-btn:hover { transform: none; }
 }
+
+.carousel-caption {
+  background-color: rgba(33, 31, 29, 0.85) !important;
+  color: #f5e6c8;
+}
+
+.carousel-caption h2,
+.carousel-caption .h5,
+html[data-bs-theme="light"] .carousel-caption h2,
+html[data-bs-theme="light"] .carousel-caption .h5 {
+  color: #f5e6c8;
+}
+
+#galleryBooksContainer .card-subtitle { color: #cfc5ae !important; }
+#galleryBooksContainer .card-text { color: #f0e8d6; }
+
+html[data-bs-theme="light"] #galleryBooksContainer .card-subtitle { color: #54493a !important; }
+html[data-bs-theme="light"] #galleryBooksContainer .card-text { color: #1f1b16; }
+
+.mq-suggest-text { color: var(--bs-body-color); }
