@@ -58,8 +58,12 @@
         <h1 class="mb-3">About the Team</h1>
 
         <div class="mq-no-highlight mb-4" id="pageSearchBox">
-          <label for="pageSearch" class="form-label">Search this page</label>
-          <input type="search" id="pageSearch" class="form-control" placeholder="Type a word, e.g. “library”, “tea”, “excerpt”…" autocomplete="off">
+         <div class="mq-search position-relative">
+  <label for="pageSearch" class="form-label">Search this page</label>
+  <input type="search" id="pageSearch" class="form-control" placeholder="Type a word, e.g. “library”, “tea”, “excerpt”…"
+         autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="pageSuggest">
+  <ul id="pageSuggest" class="mq-suggest list-unstyled mb-0" role="listbox" hidden></ul>
+</div>
           <div id="pageSearchCount" class="small text-body-secondary mt-1" aria-live="polite"></div>
         </div>
 
