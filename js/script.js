@@ -186,7 +186,7 @@
   }
  
   function applyTheme() {
-    // Day mode: the dark background themes and Halloween mode are switched off
+   
     if (root.getAttribute('data-bs-theme') === 'light') {
       root.style.removeProperty('--bg');
       root.style.removeProperty('--bs-body-bg');
@@ -267,7 +267,7 @@
     }
   });
  
-  window.marginaliaApplyTheme = applyTheme; // used by the jQuery day/night switch
+  window.marginaliaApplyTheme = applyTheme; 
  
   applyTheme();
  
@@ -596,7 +596,7 @@
       }
  
       if (window.jQuery) {
-        // Assignment 6 (Task 6): jQuery shows the spinner, then the success message
+      
         contactForm.dispatchEvent(new CustomEvent('mq:valid'));
         return;
       }
@@ -986,7 +986,7 @@
       img.alt = book.alt;
       img.className = 'd-block w-100 carousel-img';
  
-      // Task 9: only the first slide loads right away, the rest wait for jQuery
+      
       if (index === 0 || !window.jQuery) {
         img.src = book.src;
       } else {
@@ -1066,7 +1066,7 @@
     img.alt = book.alt;
     img.className = 'card-img-top gallery-img';
  
-    // Task 9: lazy loading - the real file is stored in data-src until the card scrolls into view
+  
     if (window.jQuery) {
       img.src = LAZY_PLACEHOLDER;
       img.dataset.src = book.src;
@@ -1145,28 +1145,20 @@
   }
 })();
 
-/* =====================================================================
-   ASSIGNMENT 6 - jQuery
-   Task 0  Setup
-   Part 1  Task 1 Live filter | Task 2 Autocomplete | Task 3 Highlighting
-   Part 2  Task 4 Scroll progress bar | Task 5 Number counter | Task 6 Submit spinner
-   Part 3  Task 7 Toasts | Task 8 Copy button | Task 9 Lazy loading
-   ===================================================================== */
+
 
 $(document).ready(function () {
-  // ---------------------------------------------------------------
-  // Task 0. Setup
-  // ---------------------------------------------------------------
+
   console.log('jQuery is ready!');
 
   const $win = $(window);
   const $doc = $(document);
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // Escape user text before it is put into a RegExp
+ 
   const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-  // Run a function at most once per animation frame (keeps scroll handlers cheap)
+  
   function rafThrottle(fn) {
     let waiting = false;
     return function () {
@@ -1179,7 +1171,7 @@ $(document).ready(function () {
     };
   }
 
-  // Is the element (partly) inside the visible part of the window?
+ 
   function isInView($el, margin) {
     if (!$el.length) return false;
     const top = $el.offset().top;
@@ -1189,10 +1181,7 @@ $(document).ready(function () {
     return bottom >= viewTop && top <= viewBottom;
   }
 
-  // ---------------------------------------------------------------
-  // Task 7. Notification system (toasts)
-  // Defined first because the other tasks use it.
-  // ---------------------------------------------------------------
+ 
   const $toastBox = $('<div id="mq-toasts" aria-live="polite" aria-atomic="false"></div>').appendTo('body');
   const toastIcons = { success: '✓', info: 'i', error: '!' };
 
@@ -1207,12 +1196,12 @@ $(document).ready(function () {
       .hide()
       .appendTo($toastBox);
 
-    // fade in -> stay for 3.2 s -> fade out -> remove from the DOM
+   
     $toast.fadeIn(250).delay(3200).fadeOut(600, function () {
       $(this).remove();
     });
 
-    // limit the stack to 4 messages
+  
     $toastBox.children().slice(0, -4).remove();
     return $toast;
   }
@@ -1223,9 +1212,7 @@ $(document).ready(function () {
     });
   });
 
-  // ---------------------------------------------------------------
-  // Task 1. Real-time search and live filter (Excerpts page, reading log)
-  // ---------------------------------------------------------------
+ 
   const $logSearch = $('#logSearch');
 
   if ($logSearch.length) {
@@ -1238,7 +1225,7 @@ $(document).ready(function () {
       const query = $logSearch.val().trim().toLowerCase();
       const $rows = $('#readingLogBody tr');
 
-      // keep the rows whose text contains the query
+    
       const $matches = $rows.filter(function () {
         return $(this).text().toLowerCase().indexOf(query) > -1;
       });
@@ -1256,76 +1243,68 @@ $(document).ready(function () {
 
     $logSearch.on('keyup input', applyLogFilter);
 
-    // the status buttons re-render the table, so apply the search again afterwards
+  
     $('#statusFilters').on('click', 'button', applyLogFilter);
   }
 
-  // ---------------------------------------------------------------
-  // Task 2. Autocomplete search suggestions (Gallery page)
-  // ---------------------------------------------------------------
-  const $gallerySearch = $('#gallerySearch');
-
-  if ($gallerySearch.length) {
-    const $suggestList = $('#suggestList');
-    const entries = [];
+ 
+   function setupAutosuggest(options) {
+    const $input = options.$input;
+    const $list = options.$list;
+    const minChars = options.minChars || 1;
+    const maxItems = options.maxItems || 6;
+    let entries = null;
     let activeIndex = -1;
     let shown = [];
 
-    // Build the suggestion data from the cards that are on the page
-    $('#galleryBooksContainer article.card').each(function () {
-      const $card = $(this);
-      const title = $card.find('.card-title').text();
-      const author = $card.find('.card-subtitle').text();
+    function getEntries() {
+      if (!entries || !entries.length) entries = options.getEntries();
+      return entries;
+    }
 
-      entries.push({ text: title, kind: 'Book', $cards: $card });
-
-      if (!entries.some((e) => e.kind === 'Author' && e.text === author)) {
-        const $sameAuthor = $('#galleryBooksContainer article.card').filter(function () {
-          return $(this).find('.card-subtitle').text() === author;
-        });
-        entries.push({ text: author, kind: 'Author', $cards: $sameAuthor });
-      }
-    });
-
-    function closeSuggestions() {
-      $suggestList.prop('hidden', true).empty();
-      $gallerySearch.attr('aria-expanded', 'false').removeAttr('aria-activedescendant');
+    function close() {
+      $list.prop('hidden', true).empty();
+      $input.attr('aria-expanded', 'false').removeAttr('aria-activedescendant');
       activeIndex = -1;
       shown = [];
     }
 
     function setActive(index) {
-      const $items = $suggestList.children();
+      const $items = $list.children('.mq-suggest-item');
       $items.removeClass('active').attr('aria-selected', 'false');
       activeIndex = index;
-
       if (index >= 0) {
         const $item = $items.eq(index).addClass('active').attr('aria-selected', 'true');
-        $gallerySearch.attr('aria-activedescendant', $item.attr('id'));
+        $input.attr('aria-activedescendant', $item.attr('id'));
       } else {
-        $gallerySearch.removeAttr('aria-activedescendant');
+        $input.removeAttr('aria-activedescendant');
       }
     }
 
-    function renderSuggestions() {
-      const query = $gallerySearch.val().trim().toLowerCase();
+    function render() {
+      const query = $input.val().trim().toLowerCase();
+      if (query.length < minChars) { close(); return; }
 
-      if (!query) {
-        closeSuggestions();
-        return;
-      }
+      const starts = [];
+      const contains = [];
+      getEntries().forEach(function (entry) {
+        const at = entry.text.toLowerCase().indexOf(query);
+        if (at === 0) starts.push(entry);
+        else if (at > 0) contains.push(entry);
+      });
+      shown = starts.concat(contains)
+        .filter((e) => e.text.toLowerCase() !== query)
+        .slice(0, maxItems);
 
-      shown = entries.filter((e) => e.text.toLowerCase().indexOf(query) > -1).slice(0, 6);
-      $suggestList.empty();
-
+      $list.empty();
       if (!shown.length) {
-        $suggestList.append('<li class="mq-suggest-empty">No suggestions found</li>');
+        $list.append('<li class="mq-suggest-empty">No suggestions found</li>');
       }
 
       $.each(shown, function (i, entry) {
         const at = entry.text.toLowerCase().indexOf(query);
         const $li = $('<li class="mq-suggest-item" role="option" aria-selected="false"></li>')
-          .attr('id', 'suggest-' + i)
+          .attr('id', $list.attr('id') + '-' + i)
           .data('index', i)
           .append($('<span class="mq-suggest-kind"></span>').text(entry.kind))
           .append(
@@ -1334,35 +1313,24 @@ $(document).ready(function () {
               .append($('<strong></strong>').text(entry.text.slice(at, at + query.length)))
               .append(document.createTextNode(entry.text.slice(at + query.length)))
           );
-        $suggestList.append($li);
+        $list.append($li);
       });
 
-      $suggestList.prop('hidden', false);
-      $gallerySearch.attr('aria-expanded', 'true');
+      $list.prop('hidden', false);
+      $input.attr('aria-expanded', 'true');
       activeIndex = -1;
     }
 
-    function chooseSuggestion(entry) {
-      $gallerySearch.val(entry.text);
-      closeSuggestions();
-
-      const $first = entry.$cards.first();
-      $first[0].scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
-
-      // pulse the chosen card(s)
-      entry.$cards.removeClass('mq-flash');
-      void entry.$cards[0].offsetWidth; // restart the CSS animation
-      entry.$cards.addClass('mq-flash');
-      window.setTimeout(() => entry.$cards.removeClass('mq-flash'), 2400);
-
-      showToast('Showing: ' + entry.text, 'info');
-      lazyLoadImages();
+    function choose(entry) {
+      $input.val(entry.text);
+      close();
+      options.onChoose(entry);
     }
 
-    $gallerySearch.on('input', renderSuggestions);
+    $input.on('input', render);
 
-    $gallerySearch.on('keydown', function (event) {
-      if ($suggestList.prop('hidden')) return;
+    $input.on('keydown', function (event) {
+      if ($list.prop('hidden')) return;
 
       if (event.key === 'ArrowDown') {
         event.preventDefault();
@@ -1371,32 +1339,144 @@ $(document).ready(function () {
         event.preventDefault();
         setActive(shown.length ? (activeIndex - 1 + shown.length) % shown.length : -1);
       } else if (event.key === 'Enter') {
-        event.preventDefault();
-        const entry = shown[activeIndex >= 0 ? activeIndex : 0];
-        if (entry) chooseSuggestion(entry);
+        if (activeIndex >= 0 && shown[activeIndex]) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          choose(shown[activeIndex]);
+        } else if (options.enterPicksFirst && shown[0]) {
+          event.preventDefault();
+          choose(shown[0]);
+        } else {
+          close();
+        }
       } else if (event.key === 'Escape') {
-        closeSuggestions();
+        close();
       }
     });
 
-    // mousedown (not click) so the input does not lose focus first
-    $suggestList.on('mousedown', '.mq-suggest-item', function (event) {
+    $list.on('mousedown', '.mq-suggest-item', function (event) {
       event.preventDefault();
-      chooseSuggestion(shown[$(this).data('index')]);
+      choose(shown[$(this).data('index')]);
     });
 
-    $suggestList.on('mouseenter', '.mq-suggest-item', function () {
+    $list.on('mouseenter', '.mq-suggest-item', function () {
       setActive($(this).data('index'));
     });
 
+    $input.on('blur', function () { window.setTimeout(close, 120); });
+
     $doc.on('click', function (event) {
-      if (!$(event.target).closest('.mq-search').length) closeSuggestions();
+      if (!$(event.target).closest($list.closest('.mq-search')).length) close();
     });
   }
 
-  // ---------------------------------------------------------------
-  // Task 3. Search highlighting (About page)
-  // ---------------------------------------------------------------
+  const $gallerySearch = $('#gallerySearch');
+
+  if ($gallerySearch.length) {
+    setupAutosuggest({
+      $input: $gallerySearch,
+      $list: $('#suggestList'),
+      enterPicksFirst: true,
+      getEntries: function () {
+        const list = [];
+        const $cards = $('#galleryBooksContainer article.card');
+
+        $cards.each(function () {
+          const $card = $(this);
+          const author = $card.find('.card-subtitle').text();
+
+          list.push({ text: $card.find('.card-title').text(), kind: 'Book', $cards: $card });
+
+          if (!list.some((e) => e.kind === 'Author' && e.text === author)) {
+            list.push({
+              text: author,
+              kind: 'Author',
+              $cards: $cards.filter(function () {
+                return $(this).find('.card-subtitle').text() === author;
+              })
+            });
+          }
+        });
+        return list;
+      },
+      onChoose: function (entry) {
+        entry.$cards[0].scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+        entry.$cards.removeClass('mq-flash');
+        void entry.$cards[0].offsetWidth;
+        entry.$cards.addClass('mq-flash');
+        window.setTimeout(() => entry.$cards.removeClass('mq-flash'), 2400);
+        showToast('Showing: ' + entry.text, 'info');
+        lazyLoadImages();
+      }
+    });
+  }
+
+  if ($logSearch.length && $('#logSuggest').length) {
+    setupAutosuggest({
+      $input: $logSearch,
+      $list: $('#logSuggest'),
+      enterPicksFirst: true,
+      getEntries: function () {
+        const seen = {};
+        const list = [];
+        const kinds = ['Book', 'Author', 'Genre'];
+
+        $('#readingLogBody tr').each(function () {
+          $(this).children('td').slice(0, 3).each(function (i) {
+            const text = $(this).text().trim();
+            if (text && !seen[kinds[i] + text]) {
+              seen[kinds[i] + text] = true;
+              list.push({ text: text, kind: kinds[i] });
+            }
+          });
+        });
+        return list;
+      },
+      onChoose: function () {
+        $logSearch.trigger('input');
+      }
+    });
+  }
+
+  const $aboutSearch = $('#pageSearch');
+
+  if ($aboutSearch.length && $('#pageSuggest').length) {
+    setupAutosuggest({
+      $input: $aboutSearch,
+      $list: $('#pageSuggest'),
+      minChars: 2,
+      getEntries: function () {
+        const list = [];
+        const seen = {};
+        const $root = $('#main');
+
+        $root.find('h1, h2, h3, .accordion-header').each(function () {
+          const text = $(this).text().replace(/\s+/g, ' ').trim();
+          if (text && !seen[text.toLowerCase()] && !$(this).closest('.mq-no-highlight').length) {
+            seen[text.toLowerCase()] = true;
+            list.push({ text: text, kind: 'Section' });
+          }
+        });
+
+        const words = $root.clone().find('.mq-no-highlight, script, style').remove().end()
+          .text().match(/[A-Za-z\u0400-\u04FF][A-Za-z\u0400-\u04FF'’-]{3,}/g) || [];
+
+        words.forEach(function (word) {
+          const key = word.toLowerCase();
+          if (!seen[key]) {
+            seen[key] = true;
+            list.push({ text: key, kind: 'Word' });
+          }
+        });
+        return list;
+      },
+      onChoose: function () {
+        $aboutSearch.trigger('input');
+      }
+    });
+  }
+
+ 
   const $pageSearch = $('#pageSearch');
 
   if ($pageSearch.length) {
@@ -1412,32 +1492,32 @@ $(document).ready(function () {
         .css('display', open ? 'block' : 'none');
     }
 
-    // Replace every <mark> by its plain text again
+    
     function clearHighlights() {
       $searchRoot.find('mark.mq-highlight').each(function () {
         $(this).replaceWith(document.createTextNode($(this).text()));
       });
-      $searchRoot[0].normalize(); // glue the split text nodes back together
+      $searchRoot[0].normalize(); 
 
-      // close the FAQ items that the search had opened
+      
       $searchRoot.find('.accordion-item.mq-auto-open').each(function () {
         setAccordion($(this), false);
         $(this).removeClass('mq-auto-open');
       });
     }
 
-    // Walk through the text nodes of an element and wrap the matches
+   
     function highlightIn($element, regex) {
       $element.contents().each(function () {
-        if (this.nodeType === 3) { // text node
+        if (this.nodeType === 3) {
           if (!this.nodeValue.trim()) return;
           regex.lastIndex = 0;
           if (!regex.test(this.nodeValue)) return;
 
-          const safeHtml = $('<div>').text(this.nodeValue).html(); // escape < > &
+          const safeHtml = $('<div>').text(this.nodeValue).html(); 
           const marked = safeHtml.replace(regex, '<mark class="mq-highlight">$1</mark>');
           $(this).replaceWith(marked);
-        } else if (this.nodeType === 1) { // element
+        } else if (this.nodeType === 1) { 
           const $el = $(this);
           if ($el.is('script, style, textarea, input, select, mark') || $el.closest('.mq-no-highlight').length) return;
           highlightIn($el, regex);
@@ -1454,13 +1534,13 @@ $(document).ready(function () {
         return;
       }
 
-      // the capture group lets "$1" keep the original upper/lower case
+    
       const regex = new RegExp('(' + escapeRegExp(term) + ')', 'gi');
       highlightIn($searchRoot, regex);
 
       const total = $searchRoot.find('mark.mq-highlight').length;
 
-      // open FAQ answers that contain a match
+      
       $searchRoot.find('.accordion-item').each(function () {
         const $item = $(this);
         if ($item.find('mark.mq-highlight').length && !$item.find('.accordion-header').hasClass('active')) {
@@ -1481,7 +1561,7 @@ $(document).ready(function () {
       debounceTimer = window.setTimeout(runPageSearch, 150);
     });
 
-    // Enter jumps to the first match
+    
     $pageSearch.on('keydown', function (event) {
       if (event.key !== 'Enter') return;
       event.preventDefault();
@@ -1490,9 +1570,7 @@ $(document).ready(function () {
     });
   }
 
-  // ---------------------------------------------------------------
-  // Task 4. Colourful scroll progress bar (every page)
-  // ---------------------------------------------------------------
+
   const $progress = $(
     '<div id="mq-progress" role="presentation">' +
       '<div class="mq-progress-bar"></div>' +
@@ -1515,9 +1593,7 @@ $(document).ready(function () {
   $win.on('scroll resize', rafThrottle(updateProgress));
   updateProgress();
 
-  // ---------------------------------------------------------------
-  // Task 5. Animated number counter (Home page, "Marginalia in Numbers")
-  // ---------------------------------------------------------------
+  
   const $counters = $('.mq-stat-number');
 
   function animateCounter($el) {
@@ -1532,7 +1608,7 @@ $(document).ready(function () {
       return;
     }
 
-    // animate a plain object from 0 to the target and print every step
+  
     $({ value: 0 }).animate({ value: target }, {
       duration: 2000,
       easing: 'swing',
@@ -1557,11 +1633,7 @@ $(document).ready(function () {
     checkCounters();
   }
 
-  // ---------------------------------------------------------------
-  // Task 6. Loading spinner on submit (contact form + sign-up form)
-  // ---------------------------------------------------------------
-  // Shows "Please wait...", disables the button, and after ~2 s (a fake server call)
-  // restores the button and runs the callback.
+
   function submitWithSpinner($form, callback) {
     const $submit = $form.find('[type="submit"]');
     const $others = $form.find('button').not($submit);
@@ -1580,7 +1652,7 @@ $(document).ready(function () {
     }, 2000);
   }
 
-  // Contact form: the original validation (above) fires "mq:valid" once everything is correct
+
   $('#contactForm').on('mq:valid', function () {
     const $form = $(this);
 
@@ -1592,7 +1664,7 @@ $(document).ready(function () {
     });
   });
 
-  // Sign-up form (modal on the Contact page)
+  
   $('#accountForm').on('mq:valid', function (event) {
     const $form = $(this);
     const username = event.originalEvent.detail.username;
@@ -1605,14 +1677,11 @@ $(document).ready(function () {
       $form[0].reset();
       showToast('Account created. Welcome, ' + username + '!', 'success');
 
-      // close the modal after a moment (re-uses the existing close button)
       window.setTimeout(() => $('#closeAccountBtn').trigger('click'), 1800);
     });
   });
 
-  // ---------------------------------------------------------------
-  // Task 8. "Copy" button next to the quotes (Home + Excerpts pages)
-  // ---------------------------------------------------------------
+
   const ICON_COPY =
     '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" ' +
     'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
@@ -1624,7 +1693,7 @@ $(document).ready(function () {
 
   let copyingFromButton = false;
 
-  // Copy text with the Clipboard API; fall back to execCommand when it is not available
+  
   function copyText(text) {
     const result = $.Deferred();
 
@@ -1654,7 +1723,7 @@ $(document).ready(function () {
     return result.promise();
   }
 
-  // Put a copy button beside every quote card
+
   $('.mq-card blockquote').each(function () {
     const $quote = $(this).addClass('mq-copyable');
 
@@ -1673,7 +1742,7 @@ $(document).ready(function () {
     const $btn = $(this);
     const $row = $btn.closest('.mq-quote-row');
     const quote = $row.find('blockquote').text().trim();
-    const source = $row.next('p').text().trim(); // "— Leo Tolstoy"
+    const source = $row.next('p').text().trim();
     const $tooltip = $btn.siblings('.mq-tooltip');
 
     copyingFromButton = true;
@@ -1685,7 +1754,7 @@ $(document).ready(function () {
         $tooltip.stop(true, true).fadeIn(150);
         showToast('Quote copied to clipboard', 'success');
 
-        // back to the normal icon after 2 s
+     
         $btn.data('timer', window.setTimeout(function () {
           $btn.removeClass('is-copied').html(ICON_COPY).attr('aria-label', 'Copy quote to clipboard');
           $tooltip.fadeOut(250);
@@ -1699,7 +1768,7 @@ $(document).ready(function () {
       });
   });
 
-  // Also react when a visitor copies a quote by hand (select + Ctrl+C)
+ 
   $doc.on('copy', function () {
     if (copyingFromButton) return;
     const selection = window.getSelection();
@@ -1708,9 +1777,7 @@ $(document).ready(function () {
     }
   });
 
-  // ---------------------------------------------------------------
-  // Extra: Day / Night mode switch (button in the navbar, every page)
-  // ---------------------------------------------------------------
+
   const MODE_KEY = 'marginaliaColorMode';
   const ICON_SUN =
     '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" ' +
@@ -1725,7 +1792,7 @@ $(document).ready(function () {
 
   function paintModeButton() {
     const isLight = $root.attr('data-bs-theme') === 'light';
-    // the icon shows what a click will switch TO
+   
     $modeBtn
       .html(isLight ? ICON_MOON : ICON_SUN)
       .attr('aria-label', isLight ? 'Switch to night mode' : 'Switch to day mode')
@@ -1734,7 +1801,7 @@ $(document).ready(function () {
   }
 
   function setColorMode(mode, announce) {
-    // short colour transition, removed again afterwards
+   
     $root.addClass('mq-mode-anim');
     window.setTimeout(() => $root.removeClass('mq-mode-anim'), 500);
 
@@ -1754,9 +1821,7 @@ $(document).ready(function () {
     setColorMode($root.attr('data-bs-theme') === 'light' ? 'dark' : 'light', true);
   });
 
-  // ---------------------------------------------------------------
-  // Task 9. Image lazy loading (Home portraits, Gallery cards + carousel)
-  // ---------------------------------------------------------------
+
   function loadImage($img) {
     const realSrc = $img.attr('data-src');
     if (!realSrc) return;
@@ -1766,7 +1831,7 @@ $(document).ready(function () {
       .one('load', function () {
         $img.removeClass('lazy lazy-slide').addClass('mq-loaded');
       })
-      .attr('src', realSrc); // swap the placeholder for the real picture
+      .attr('src', realSrc); 
   }
 
   function lazyLoadImages() {
@@ -1776,7 +1841,7 @@ $(document).ready(function () {
       const bottom = top + $img.height();
       const viewTop = $win.scrollTop();
       const viewBottom = viewTop + $win.height();
-      const margin = 150; // start loading a little before it is visible
+      const margin = 150; 
 
       if (bottom >= viewTop - margin && top <= viewBottom + margin) {
         loadImage($img);
@@ -1787,7 +1852,7 @@ $(document).ready(function () {
   $win.on('scroll resize load', rafThrottle(lazyLoadImages));
   lazyLoadImages();
 
-  // Carousel slides are hidden (offset() would be 0), so load them just before they are shown
+
   const $carousel = $('#galleryCarousel');
 
   if ($carousel.length) {
