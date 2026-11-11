@@ -857,7 +857,7 @@ html[data-bs-theme="light"] {
   --bs-heading-color: #8a5a1f;
   --bs-primary: #8a5a1f;
   --bs-primary-rgb: 138, 90, 31;
-  --bs-link-color: #9b4a3c;
+  --bs-link-color: #7e3c31;
   --bs-link-color-rgb: 155, 74, 60;
   --bs-link-hover-color: #6e2f24;
   --bs-link-hover-color-rgb: 110, 47, 36;
@@ -1114,11 +1114,11 @@ html[data-bs-theme="light"] .badge.text-bg-info    { background-color: #2c6f8a !
 }
 
 html[data-bs-theme="light"] .btn-outline-secondary {
-  --bs-btn-color: #5a5242;
+  --bs-btn-color: #564f3f;
   --bs-btn-border-color: #8f8672;
   --bs-btn-hover-color: #fff;
-  --bs-btn-hover-bg: #5a5242;
-  --bs-btn-hover-border-color: #5a5242;
+  --bs-btn-hover-bg: #564f3f;
+  --bs-btn-hover-border-color: #564f3f;
   --bs-btn-active-color: #fff;
   --bs-btn-active-bg: #463f33;
   --bs-btn-active-border-color: #463f33;
