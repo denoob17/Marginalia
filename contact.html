@@ -48,6 +48,10 @@
               <a class="nav-link text-uppercase small fw-semibold px-lg-3"
                  href="gallery.html">Gallery</a>
             </li>
+                        <li class="nav-item">
+              <a class="nav-link text-uppercase small fw-semibold px-lg-3"
+                 href="books.html">Books</a>
+            </li>
             <li class="nav-item">
               <a class="nav-link text-uppercase small fw-semibold px-lg-3 active"
                  aria-current="page" href="contact.html">Contact</a>
@@ -109,8 +113,7 @@
               <input type="text" class="form-control"
                      id="name" name="name"
                      placeholder="e.g. Aigerim Bekova"
-                     maxlength="50"
-                     autocomplete="name" required>
+                     autocomplete="name" aria-required="true">
               <span class="error-msg text-danger small"
                     id="nameError" role="alert"></span>
             </div>
@@ -119,16 +122,26 @@
               <label for="email" class="form-label">Your Email</label>
               <div class="input-group">
                 <span class="input-group-text" aria-hidden="true">@</span>
-                <input type="email" class="form-control"
+                <input type="text" inputmode="email" class="form-control"
                        id="email" name="email"
                        placeholder="you@example.com"
-                       maxlength="254" data-no-spaces
-                       autocomplete="email" required>
+                       data-no-spaces
+                       autocomplete="email" aria-required="true">
               </div>
               <span class="error-msg text-danger small"
                     id="emailError" role="alert"></span>
             </div>
  
+            <div class="col-12 col-md-6">
+              <label for="phone" class="form-label">Phone <span class="text-body-secondary small">(optional)</span></label>
+              <input type="text" inputmode="tel" class="form-control"
+                     id="phone" name="phone"
+                     placeholder="+7 701 123 45 67"
+                     data-optional autocomplete="tel">
+              <span class="error-msg text-danger small"
+                    id="phoneError" role="alert"></span>
+            </div>
+
             <div class="col-12 col-md-6">
               <label for="category" class="form-label">Submission Type</label>
               <select class="form-select" id="category" name="category">
@@ -179,7 +192,7 @@
               <textarea class="form-control" id="excerpt"
                         name="excerpt" rows="4"
                         placeholder="Paste the line here, along with the book and author..."
-                        maxlength="500" required></textarea>
+                        aria-required="true"></textarea>
               <span class="error-msg text-danger small"
                     id="excerptError" role="alert"></span>
             </div>
@@ -187,7 +200,7 @@
             <div class="col-12">
               <div class="form-check">
                 <input class="form-check-input" type="checkbox"
-                       id="permission" name="permission" required>
+                       id="permission" name="permission" aria-required="true">
                 <label class="form-check-label" for="permission">
                   You may publish my excerpt on the site, with credit.
                 </label>
@@ -213,12 +226,11 @@
         <section class="card card-body p-3 p-md-4 mt-4">
           <h2 class="h3 mb-2">Create an Account</h2>
           <p class="text-body-secondary">
-            Want to keep track of your submissions? Create a free account.
+            Want to keep a shelf of saved books and see your details on a profile page? Create a free account.
           </p>
-          <div>
-            <button type="button" id="openAccountBtn" class="btn btn-primary">
-              Sign Up
-            </button>
+          <div class="d-flex flex-wrap gap-2">
+            <a href="signup.html" class="btn btn-primary">Sign Up</a>
+            <a href="login.html" class="btn btn-outline-primary">Log In</a>
           </div>
         </section>
  
@@ -226,72 +238,8 @@
     </div>
   </main>
  
-  <div id="accountModal" class="popup-modal" role="dialog" aria-modal="true" aria-labelledby="accountModalTitle" aria-hidden="true">
-    <div class="popup-content card">
-      <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h2 id="accountModalTitle" class="h4 mb-0">Create an Account</h2>
-          <button type="button" id="closeAccountBtn" class="btn-close" aria-label="Close sign up window"></button>
-        </div>
- 
-        <form id="accountForm" novalidate>
- 
-          <div class="mb-3">
-            <label for="username" class="form-label">Username</label>
-            <input type="text" class="form-control"
-                   id="username" maxlength="20"
-                   autocomplete="username" data-no-spaces required>
-            <div class="form-text">3–20 characters: Latin letters, digits and "_". No spaces.</div>
-            <span class="error-msg text-danger small"
-                  id="usernameError" role="alert"></span>
-          </div>
- 
-          <div class="mb-3">
-            <label for="signupEmail" class="form-label">Email</label>
-            <input type="email" class="form-control"
-                   id="signupEmail" maxlength="254"
-                   autocomplete="email" data-no-spaces required>
-            <span class="error-msg text-danger small"
-                  id="signupEmailError" role="alert"></span>
-          </div>
- 
-          <div class="mb-3">
-            <label for="password" class="form-label">Password</label>
-            <input type="password" class="form-control"
-                   id="password" maxlength="64"
-                   autocomplete="new-password" data-no-spaces required>
-            <div class="form-text">8–64 characters, no spaces: uppercase, lowercase, digit and a symbol.</div>
-            <span class="error-msg text-danger small"
-                  id="passwordError" role="alert"></span>
-          </div>
- 
-          <div class="mb-3">
-            <label for="confirmPassword" class="form-label">
-              Confirm Password
-            </label>
-            <input type="password" class="form-control"
-                   id="confirmPassword" maxlength="64"
-                   autocomplete="new-password" data-no-spaces required>
-            <span class="error-msg text-danger small"
-                  id="confirmPasswordError" role="alert"></span>
-          </div>
- 
-          <div id="accountSuccess"
-               class="alert alert-success d-none"
-               role="status">
-          </div>
- 
-          <button type="submit" class="btn btn-primary">
-            Create Account
-          </button>
- 
-        </form>
-      </div>
-    </div>
-  </div>
- 
   <footer class="bg-dark border-top text-center text-body-secondary small py-4 px-3 px-sm-2 mt-5">
-    <p class="mb-1">Marginalia — Assignment #4 Project | Group 2503</p>
+    <p class="mb-1">Marginalia — Final Project | Group 2503</p>
     <p class="mb-0">
       Team Members: Akerke Ramazan &amp; Gabidin Kaldybek
     </p>

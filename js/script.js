@@ -186,7 +186,6 @@
   }
  
   function applyTheme() {
-   
     if (root.getAttribute('data-bs-theme') === 'light') {
       root.style.removeProperty('--bg');
       root.style.removeProperty('--bs-body-bg');
@@ -267,7 +266,7 @@
     }
   });
  
-  window.marginaliaApplyTheme = applyTheme; 
+  window.marginaliaApplyTheme = applyTheme;
  
   applyTheme();
  
@@ -469,6 +468,32 @@
     return '';
   }
  
+  function validatePhone(rawValue, isRequired) {
+    const value = rawValue.trim();
+
+    if (!value) return isRequired ? 'Phone number is required.' : '';
+    if (!/^\+?[\d\s\-()]+$/.test(value)) {
+      return 'Phone may contain only digits, spaces, "-", brackets and a "+" at the start.';
+    }
+
+    const digits = value.replace(/\D/g, '');
+    if (digits.length < 10 || digits.length > 15) {
+      return 'Phone number must contain 10–15 digits (for example +7 701 123 45 67).';
+    }
+
+    return '';
+  }
+
+  function validateBookQuery(rawValue) {
+    const value = rawValue.trim();
+
+    if (!value) return 'Type a title, an author or a keyword to search.';
+    if (value.length < 2) return 'Search text must contain at least 2 characters.';
+    if (value.length > 100) return 'Search text must be 100 characters or fewer.';
+
+    return '';
+  }
+
   function validateExcerpt(rawValue) {
     const value = rawValue.trim();
  
@@ -488,9 +513,13 @@
   const fieldValidators = {
     name: validateName,
     email: validateEmail,
+    phone: (value, input) => validatePhone(value, !(input && input.hasAttribute('data-optional'))),
     excerpt: validateExcerpt,
     username: validateUsername,
     signupEmail: validateEmail,
+    loginEmail: validateEmail,
+    loginPassword: (value) => (value ? '' : 'Password is required.'),
+    bookQuery: validateBookQuery,
     password: (value) => validatePassword(value, readValue('username')),
     confirmPassword: (value) => {
       if (!value) return 'Please confirm your password.';
@@ -509,7 +538,7 @@
  
   function validateInput(input) {
     const check = fieldValidators[input.id];
-    const message = check ? check(input.value) : '';
+    const message = check ? check(input.value, input) : '';
  
     if (message) {
       showError(getErrorElement(input), message);
@@ -559,6 +588,195 @@
     const firstInvalid = form.querySelector('.is-invalid');
     if (firstInvalid) firstInvalid.focus();
   }
+ 
+  function runWithSpinner(form, done) {
+    if (window.jQuery) {
+      form.dispatchEvent(new CustomEvent('mq:valid', { bubbles: true, detail: { done } }));
+    } else {
+      done();
+    }
+  }
+
+  function notify(message, type) {
+    if (typeof window.mqToast === 'function') window.mqToast(message, type);
+  }
+
+  function readStorage(key, fallback) {
+    try {
+      const value = JSON.parse(localStorage.getItem(key));
+      return value === null || value === undefined ? fallback : value;
+    } catch (error) {
+      return fallback;
+    }
+  }
+
+  function writeStorage(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function makeEl(tag, className, text) {
+    const element = document.createElement(tag);
+    if (className) element.className = className;
+    if (text !== undefined) element.textContent = text;
+    return element;
+  }
+
+  const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+
+  
+  const USERS_KEY = 'marginaliaUsers';
+  const SESSION_KEY = 'marginaliaSession';
+
+  const Auth = {
+    users: () => readStorage(USERS_KEY, []),
+
+    findUser(email) {
+      const wanted = String(email).trim().toLowerCase();
+      return Auth.users().find((user) => user.email.toLowerCase() === wanted) || null;
+    },
+
+    signUp({ name, email, phone, password }) {
+      if (Auth.findUser(email)) return { ok: false, error: 'An account with this email already exists.' };
+
+      const users = Auth.users();
+      users.push({
+        name: name.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+        password,
+        createdAt: new Date().toISOString()
+      });
+
+      return writeStorage(USERS_KEY, users)
+        ? { ok: true }
+        : { ok: false, error: 'Your browser did not let us save the account (storage is full or blocked).' };
+    },
+
+    checkCredentials(email, password) {
+      const user = Auth.findUser(email);
+      return user && user.password === password ? user : null;
+    },
+
+    logIn(email, password) {
+      const user = Auth.checkCredentials(email, password);
+      if (!user) return { ok: false, error: 'Wrong email or password.' };
+
+      try { localStorage.setItem(SESSION_KEY, user.email); } catch (error) { return { ok: false, error: 'Could not start the session.' }; }
+      return { ok: true, user };
+    },
+
+    logOut() {
+      try { localStorage.removeItem(SESSION_KEY); } catch (error) { /* ignore */ }
+    },
+
+    currentUser() {
+      let email = null;
+      try { email = localStorage.getItem(SESSION_KEY); } catch (error) { /* ignore */ }
+      return email ? Auth.findUser(email) : null;
+    }
+  };
+
+  window.MarginaliaAuth = Auth;
+
+  (function renderAuthNav() {
+    const menu = document.querySelector('#mainNav .navbar-nav');
+    if (!menu) return;
+
+    const user = Auth.currentUser();
+    const item = makeEl('li', 'nav-item');
+    const link = makeEl('a', 'nav-link text-uppercase small fw-semibold px-lg-3');
+
+    if (user) {
+      link.href = 'profile.html';
+      link.textContent = user.name.split(' ')[0];
+      link.title = 'Your profile';
+    } else {
+      link.href = 'login.html';
+      link.textContent = 'Log In';
+    }
+
+    if (['profile.html', 'login.html', 'signup.html'].includes(currentPage)) {
+      link.classList.add('active');
+      link.setAttribute('aria-current', 'page');
+    }
+
+    item.appendChild(link);
+    menu.appendChild(item);
+  })();
+
+  
+  const SHELF_KEY = 'marginaliaShelf';
+
+  const Shelf = {
+    all: () => readStorage(SHELF_KEY, []),
+    has: (id) => Shelf.all().some((book) => book.id === id),
+
+    toggle(book) {
+      const books = Shelf.all();
+      const index = books.findIndex((item) => item.id === book.id);
+
+      if (index > -1) {
+        books.splice(index, 1);
+      } else {
+        books.unshift(book);
+      }
+
+      writeStorage(SHELF_KEY, books);
+      return index === -1; 
+    },
+
+    clear: () => writeStorage(SHELF_KEY, [])
+  };
+
+  function renderShelf(container, onChange) {
+    if (!container) return;
+
+    const books = Shelf.all();
+    container.replaceChildren();
+
+    if (!books.length) {
+      container.appendChild(makeEl('p', 'text-body-secondary mb-0', 'Nothing saved yet. Press the heart on any book on the Books page.'));
+      return;
+    }
+
+    const list = makeEl('ul', 'list-unstyled mb-0 mq-shelf-list');
+
+    books.forEach((book) => {
+      const row = makeEl('li', 'mq-shelf-item');
+
+      const cover = makeEl('img', 'mq-shelf-cover');
+      cover.alt = '';
+      cover.loading = 'lazy';
+      cover.src = book.cover || 'images/open-book.svg';
+
+      const text = makeEl('div', 'mq-shelf-text');
+      text.appendChild(makeEl('div', 'fw-semibold', book.title));
+      text.appendChild(makeEl('div', 'small text-body-secondary', book.authors + (book.year ? ' · ' + book.year : '')));
+
+      const remove = makeEl('button', 'btn btn-sm btn-outline-secondary', 'Remove');
+      remove.type = 'button';
+      remove.setAttribute('aria-label', 'Remove ' + book.title + ' from the shelf');
+      remove.addEventListener('click', () => {
+        Shelf.toggle(book);
+        renderShelf(container, onChange);
+        if (onChange) onChange();
+        notify('Removed from your shelf', 'info');
+      });
+
+      row.append(cover, text, remove);
+      list.appendChild(row);
+    });
+
+    container.appendChild(list);
+  }
+
+  const RECENT_KEY = 'marginaliaRecentSearches';
+
   const contactForm = document.getElementById('contactForm');
  
   if (contactForm) {
@@ -578,7 +796,7 @@
       if (formSuccess) formSuccess.hidden = true;
  
  
-      const fields = ['name', 'email', 'excerpt']
+      const fields = ['name', 'email', 'phone', 'excerpt']
         .map((id) => document.getElementById(id))
         .filter(Boolean);
       const fieldsAreValid = fields.map(validateInput).every(Boolean);
@@ -595,79 +813,678 @@
         return;
       }
  
-      if (window.jQuery) {
-      
-        contactForm.dispatchEvent(new CustomEvent('mq:valid'));
-        return;
-      }
- 
-      if (formSuccess) {
-        formSuccess.hidden = false;
-        formSuccess.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center'
-        });
-      }
- 
-      contactForm.reset();
+      runWithSpinner(contactForm, () => {
+        if (formSuccess) {
+          formSuccess.hidden = false;
+          formSuccess.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        contactForm.reset();
+        notify('Form submitted successfully. Thank you!', 'success');
+      });
     });
   }
  
   
-  const accountForm = document.getElementById('accountForm');
- 
-  if (accountForm) {
-    const accountSuccess = document.getElementById('accountSuccess');
- 
-    const hideAccountSuccess = () => {
-      if (accountSuccess) {
-        accountSuccess.hidden = true;
-        accountSuccess.classList.add('d-none');
-      }
-    };
- 
-    const accountModal = setupModal('accountModal', 'openAccountBtn', 'closeAccountBtn', () => {
-      accountForm.reset();
-      hideAccountSuccess();
-    });
- 
-    accountForm.addEventListener('reset', () => resetValidationState(accountForm));
- 
-    accountForm.addEventListener('submit', (event) => {
+  
+  const signupForm = document.getElementById('signupForm');
+
+  if (signupForm) {
+    const signupFormError = document.getElementById('signupFormError');
+
+    signupForm.addEventListener('reset', () => resetValidationState(signupForm));
+
+    signupForm.addEventListener('submit', (event) => {
       event.preventDefault();
- 
-      const fields = ['username', 'signupEmail', 'password', 'confirmPassword']
-        .map((id) => document.getElementById(id))
-        .filter(Boolean);
-      const allValid = fields.map(validateInput).every(Boolean);
- 
-      if (!allValid) {
-        focusFirstInvalid(accountForm);
+      if (signupFormError) signupFormError.hidden = true;
+
+      const fields = ['name', 'email', 'phone', 'password', 'confirmPassword']
+        .map((id) => document.getElementById(id));
+
+      if (!fields.map(validateInput).every(Boolean)) {
+        focusFirstInvalid(signupForm);
         return;
       }
- 
-      const username = readValue('username');
- 
-      if (window.jQuery) {
-        accountForm.dispatchEvent(new CustomEvent('mq:valid', { detail: { username } }));
+
+      if (Auth.findUser(readValue('email'))) {
+        const emailInput = document.getElementById('email');
+        showError(getErrorElement(emailInput), 'An account with this email already exists. Please log in instead.');
+        emailInput.classList.add('is-invalid');
+        emailInput.focus();
         return;
       }
- 
-      if (accountSuccess) {
-        accountSuccess.textContent = `Account created! Welcome, ${username}.`;
-        accountSuccess.hidden = false;
-        accountSuccess.classList.remove('d-none');
-      }
- 
-      accountForm.reset();
- 
-      
-      if (accountModal) {
-        window.setTimeout(accountModal.close, 1800);
-      }
+
+      runWithSpinner(signupForm, () => {
+        const result = Auth.signUp({
+          name: readValue('name'),
+          email: readValue('email'),
+          phone: readValue('phone'),
+          password: readValue('password')
+        });
+
+        if (!result.ok) {
+          if (signupFormError) {
+            signupFormError.textContent = result.error;
+            signupFormError.hidden = false;
+          }
+          return;
+        }
+
+        notify('Account created. Please log in.', 'success');
+        window.setTimeout(() => { window.location.href = 'login.html?registered=1'; }, 900);
+      });
     });
   }
- 
+
+  
+  const loginForm = document.getElementById('loginForm');
+
+  if (loginForm) {
+    const loginFormError = document.getElementById('loginFormError');
+    const loginNotice = document.getElementById('loginNotice');
+
+    if (Auth.currentUser()) {
+      window.location.replace('profile.html');
+    }
+
+    if (loginNotice && new URLSearchParams(window.location.search).get('registered') === '1') {
+      loginNotice.hidden = false;
+    }
+
+    loginForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      if (loginFormError) loginFormError.hidden = true;
+      if (loginNotice) loginNotice.hidden = true;
+
+      const fields = ['loginEmail', 'loginPassword'].map((id) => document.getElementById(id));
+
+      if (!fields.map(validateInput).every(Boolean)) {
+        focusFirstInvalid(loginForm);
+        return;
+      }
+
+      const email = readValue('loginEmail');
+      const password = readValue('loginPassword');
+
+      if (!Auth.checkCredentials(email, password)) {
+        if (loginFormError) {
+          loginFormError.textContent = Auth.findUser(email)
+            ? 'Wrong password. Please try again.'
+            : 'No account was found for this email. Check the address or sign up first.';
+          loginFormError.hidden = false;
+        }
+        return;
+      }
+
+      runWithSpinner(loginForm, () => {
+        const result = Auth.logIn(email, password);
+
+        if (!result.ok) {
+          if (loginFormError) {
+            loginFormError.textContent = result.error;
+            loginFormError.hidden = false;
+          }
+          return;
+        }
+
+        notify('Welcome back, ' + result.user.name.split(' ')[0] + '!', 'success');
+        window.setTimeout(() => { window.location.href = 'profile.html'; }, 700);
+      });
+    });
+  }
+
+  
+  const profileRoot = document.getElementById('profileRoot');
+
+  if (profileRoot) {
+    const user = Auth.currentUser();
+
+    if (!user) {
+      window.location.replace('login.html');
+    } else {
+      const setText = (id, text) => {
+        const element = document.getElementById(id);
+        if (element) element.textContent = text;
+      };
+
+      const initials = user.name.split(' ').filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join('');
+
+      setText('profileInitials', initials);
+      setText('profileName', user.name);
+      setText('profileEmail', user.email);
+      setText('profileEmailRow', user.email);
+      setText('profilePhone', user.phone || 'Not provided');
+      setText(
+        'profileSince',
+        new Date(user.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+      );
+      document.getElementById('profileContent').hidden = false;
+      const loadingNote = document.getElementById('profileLoading');
+      if (loadingNote) loadingNote.hidden = true;
+
+      const shelfBox = document.getElementById('profileShelf');
+      const shelfCount = document.getElementById('profileShelfCount');
+      const refreshCount = () => { if (shelfCount) shelfCount.textContent = String(Shelf.all().length); };
+
+      renderShelf(shelfBox, refreshCount);
+      refreshCount();
+
+      const clearShelfBtn = document.getElementById('clearShelfBtn');
+      if (clearShelfBtn) {
+        clearShelfBtn.addEventListener('click', () => {
+          Shelf.clear();
+          renderShelf(shelfBox, refreshCount);
+          refreshCount();
+          notify('Your shelf is empty now', 'info');
+        });
+      }
+
+      const recentBox = document.getElementById('profileRecent');
+      const recent = readStorage(RECENT_KEY, []);
+
+      if (recentBox) {
+        if (!recent.length) {
+          recentBox.appendChild(makeEl('p', 'text-body-secondary mb-0', 'No searches yet.'));
+        } else {
+          recent.forEach((query) => {
+            const chip = makeEl('a', 'btn btn-sm btn-outline-primary', query);
+            chip.href = 'books.html?q=' + encodeURIComponent(query);
+            recentBox.appendChild(chip);
+          });
+        }
+      }
+
+      const logoutBtn = document.getElementById('logoutBtn');
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+          Auth.logOut();
+          notify('You are logged out', 'info');
+          window.setTimeout(() => { window.location.href = 'login.html'; }, 500);
+        });
+      }
+    }
+  }
+
+  
+  const bookForm = document.getElementById('bookSearchForm');
+
+  if (bookForm) {
+    const LAST_SEARCH_KEY = 'marginaliaLastSearch';
+    const LAST_RESULTS_KEY = 'marginaliaLastResults';
+    const API_URL = 'https://www.googleapis.com/books/v1/volumes';
+
+    
+    const GOOGLE_BOOKS_API_KEY = 'AIzaSyAW1mjzhZDmVlaRMNZgekX5V3dOrbG0o-Q';
+
+    const CACHE_KEY = 'marginaliaApiCache';
+    const CACHE_MAX_AGE = 30 * 60 * 1000;
+    const CACHE_MAX_ENTRIES = 20;
+
+    const cacheKeyOf = (params) => JSON.stringify([params.query.toLowerCase(), params.lang, params.order, params.free]);
+
+    function cacheGet(params) {
+      const entry = readStorage(CACHE_KEY, {})[cacheKeyOf(params)];
+      return entry && Date.now() - entry.time < CACHE_MAX_AGE ? entry : null;
+    }
+
+    function cacheSet(params, books, total) {
+      const cache = readStorage(CACHE_KEY, {});
+      cache[cacheKeyOf(params)] = { time: Date.now(), books, total };
+
+      Object.keys(cache)
+        .sort((a, b) => cache[b].time - cache[a].time)
+        .slice(CACHE_MAX_ENTRIES)
+        .forEach((key) => delete cache[key]);
+
+      writeStorage(CACHE_KEY, cache);
+    }
+
+    const queryInput = document.getElementById('bookQuery');
+    const langSelect = document.getElementById('bookLang');
+    const orderSelect = document.getElementById('bookOrder');
+    const freeCheck = document.getElementById('bookFree');
+    const statusBox = document.getElementById('bookStatus');
+    const resultsBox = document.getElementById('bookResults');
+    const recentBox = document.getElementById('recentSearches');
+    const shelfBox = document.getElementById('bookShelf');
+    const shelfCount = document.getElementById('bookShelfCount');
+
+    let activeRequest = null; 
+
+    const ICON_HEART_OFF =
+      '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"></path></svg>';
+    const ICON_HEART_ON = ICON_HEART_OFF.replace('fill="none"', 'fill="currentColor"');
+
+    function currentParams() {
+      return {
+        query: queryInput.value.trim(),
+        lang: langSelect.value,
+        order: orderSelect.value,
+        free: freeCheck.checked
+      };
+    }
+
+    function applyParams(params) {
+      queryInput.value = params.query || '';
+      langSelect.value = params.lang || '';
+      orderSelect.value = params.order || 'relevance';
+      freeCheck.checked = Boolean(params.free);
+    }
+
+    function normaliseVolume(item) {
+      const info = item.volumeInfo || {};
+      const links = info.imageLinks || {};
+      const cover = (links.thumbnail || links.smallThumbnail || '')
+        .replace(/^http:/, 'https:')
+        .replace('&edge=curl', '');
+
+      return {
+        id: item.id,
+        title: info.title || 'Untitled',
+        authors: (info.authors || []).join(', ') || 'Unknown author',
+        year: (info.publishedDate || '').slice(0, 4),
+        description: (info.description || '').replace(/<[^>]*>/g, ''),
+        cover,
+        link: info.infoLink || info.previewLink || ''
+      };
+    }
+
+    function showLoading() {
+      const spinner = makeEl('span', 'spinner-border spinner-border-sm me-2');
+      spinner.setAttribute('aria-hidden', 'true');
+      const box = makeEl('div', 'mq-status mq-status-loading', '');
+      box.append(spinner, document.createTextNode('Searching Google Books…'));
+      statusBox.replaceChildren(box);
+
+      resultsBox.replaceChildren();
+      for (let i = 0; i < 6; i += 1) {
+        const col = makeEl('div', 'col-12 col-sm-6 col-lg-4');
+        const card = makeEl('div', 'card h-100 mq-skeleton');
+        card.append(makeEl('div', 'mq-skeleton-cover'), makeEl('div', 'mq-skeleton-line'), makeEl('div', 'mq-skeleton-line short'));
+        col.appendChild(card);
+        resultsBox.appendChild(col);
+      }
+    }
+
+    function showInfo(message) {
+      statusBox.replaceChildren(makeEl('div', 'mq-status', message));
+    }
+
+    function showSearchError(message, retry) {
+      const box = makeEl('div', 'alert alert-danger d-flex flex-wrap align-items-center gap-3 mb-0');
+      box.setAttribute('role', 'alert');
+      box.appendChild(makeEl('span', 'flex-grow-1', message));
+
+      const retryBtn = makeEl('button', 'btn btn-sm btn-outline-danger', 'Try again');
+      retryBtn.type = 'button';
+      retryBtn.addEventListener('click', retry);
+      box.appendChild(retryBtn);
+
+      statusBox.replaceChildren(box);
+    }
+
+    function refreshShelf() {
+      renderShelf(shelfBox, () => {
+        refreshShelf();
+        resultsBox.querySelectorAll('.mq-save-btn').forEach((button) => {
+          paintSaveButton(button, Shelf.has(button.dataset.id));
+        });
+      });
+      if (shelfCount) shelfCount.textContent = String(Shelf.all().length);
+    }
+
+    function paintSaveButton(button, saved) {
+      button.innerHTML = saved ? ICON_HEART_ON : ICON_HEART_OFF;
+      button.classList.toggle('is-saved', saved);
+      button.setAttribute('aria-pressed', String(saved));
+      button.setAttribute('aria-label', (saved ? 'Remove from my shelf: ' : 'Save to my shelf: ') + button.dataset.title);
+    }
+
+    function renderRecent() {
+      const recent = readStorage(RECENT_KEY, []);
+      recentBox.replaceChildren();
+      recentBox.hidden = !recent.length;
+      if (!recent.length) return;
+
+      recentBox.appendChild(makeEl('span', 'small text-body-secondary me-1', 'Recent:'));
+
+      recent.forEach((query) => {
+        const chip = makeEl('button', 'btn btn-sm btn-outline-secondary', query);
+        chip.type = 'button';
+        chip.addEventListener('click', () => {
+          queryInput.value = query;
+          bookForm.requestSubmit();
+        });
+        recentBox.appendChild(chip);
+      });
+
+      const clear = makeEl('button', 'btn btn-sm btn-link text-body-secondary', 'Clear');
+      clear.type = 'button';
+      clear.addEventListener('click', () => {
+        writeStorage(RECENT_KEY, []);
+        renderRecent();
+      });
+      recentBox.appendChild(clear);
+    }
+
+    function rememberSearch(params, books) {
+      writeStorage(LAST_SEARCH_KEY, params);
+      writeStorage(LAST_RESULTS_KEY, books);
+
+      const recent = readStorage(RECENT_KEY, []).filter((query) => query.toLowerCase() !== params.query.toLowerCase());
+      recent.unshift(params.query);
+      writeStorage(RECENT_KEY, recent.slice(0, 6));
+      renderRecent();
+    }
+
+    function renderBooks(books) {
+      resultsBox.replaceChildren();
+
+      books.forEach((book) => {
+        const col = makeEl('div', 'col-12 col-sm-6 col-lg-4');
+        const card = makeEl('article', 'card h-100 mq-book-card');
+
+        const cover = makeEl('img', 'mq-book-cover');
+        cover.alt = 'Cover of ' + book.title;
+        cover.loading = 'lazy';
+        cover.src = book.cover || 'images/open-book.svg';
+        cover.addEventListener('error', () => { cover.src = 'images/open-book.svg'; }, { once: true });
+
+        const body = makeEl('div', 'card-body d-flex flex-column');
+        body.appendChild(makeEl('h3', 'card-title h5', book.title));
+        body.appendChild(makeEl('p', 'card-subtitle text-body-secondary mb-2', book.authors + (book.year ? ' · ' + book.year : '')));
+
+        if (book.description) {
+          const text = book.description.length > 170 ? book.description.slice(0, 170).trim() + '…' : book.description;
+          body.appendChild(makeEl('p', 'card-text small mq-book-desc', text));
+        }
+
+        const actions = makeEl('div', 'mt-auto d-flex align-items-center gap-2 pt-2');
+
+        const save = makeEl('button', 'btn btn-outline-primary mq-save-btn');
+        save.type = 'button';
+        save.dataset.id = book.id;
+        save.dataset.title = book.title;
+        paintSaveButton(save, Shelf.has(book.id));
+        save.addEventListener('click', () => {
+          const nowSaved = Shelf.toggle(book);
+          paintSaveButton(save, nowSaved);
+          refreshShelf();
+          notify(nowSaved ? 'Saved to your shelf' : 'Removed from your shelf', nowSaved ? 'success' : 'info');
+        });
+        actions.appendChild(save);
+
+        if (book.link) {
+          const more = makeEl('a', 'btn btn-sm btn-primary ms-auto', 'Details');
+          more.href = book.link;
+          more.target = '_blank';
+          more.rel = 'noopener noreferrer';
+          actions.appendChild(more);
+        }
+
+        body.appendChild(actions);
+        card.append(cover, body);
+        col.appendChild(card);
+        resultsBox.appendChild(col);
+      });
+    }
+
+    async function searchBooks(params) {
+      if (activeRequest) activeRequest.controller.abort();
+
+      const cached = cacheGet(params);
+      if (cached && cached.books.length) {
+        activeRequest = null;
+        renderBooks(cached.books);
+        rememberSearch(params, cached.books);
+        showInfo('Showing ' + cached.books.length + ' of about ' + (cached.total || cached.books.length).toLocaleString('en-US') + ' results for “' + params.query + '” (saved from your earlier search).');
+        return;
+      }
+
+      const request = { controller: new AbortController(), timedOut: false };
+      activeRequest = request;
+      const timer = window.setTimeout(() => {
+        request.timedOut = true;
+        request.controller.abort();
+      }, 12000);
+
+      showLoading();
+
+      const url = new URL(API_URL);
+      url.searchParams.set('q', params.query);
+      url.searchParams.set('maxResults', '12');
+      url.searchParams.set('printType', 'books');
+      url.searchParams.set('orderBy', params.order || 'relevance');
+      if (params.lang) url.searchParams.set('langRestrict', params.lang);
+      if (params.free) url.searchParams.set('filter', 'free-ebooks');
+      if (GOOGLE_BOOKS_API_KEY) url.searchParams.set('key', GOOGLE_BOOKS_API_KEY);
+
+      try {
+        const response = await fetch(url, { signal: request.controller.signal });
+
+        if (!response.ok) {
+          const error = new Error('HTTP ' + response.status);
+          error.status = response.status;
+          throw error;
+        }
+
+        const data = await response.json();
+        const books = (data.items || []).map(normaliseVolume);
+
+        if (request !== activeRequest) return;
+
+        if (!books.length) {
+          resultsBox.replaceChildren();
+          showInfo('No books found for “' + params.query + '”. Try another word or remove a filter.');
+          return;
+        }
+
+        renderBooks(books);
+        rememberSearch(params, books);
+        cacheSet(params, books, data.totalItems);
+        showInfo('Showing ' + books.length + ' of about ' + (data.totalItems || books.length).toLocaleString('en-US') + ' results for “' + params.query + '”.');
+      } catch (error) {
+        if (request !== activeRequest) return;
+        if (error.name === 'AbortError' && !request.timedOut) return;
+
+        let message = 'We could not reach Google Books. Check your internet connection and try again.';
+        if (request.timedOut) message = 'The search took too long. Please try again.';
+        if (error.status === 429) message = 'Google Books refused the request (too many requests from this network). Wait a minute and try again, or pick one of your saved searches.';
+        if (error.status >= 500) message = 'Google Books has a problem at the moment. Please try again later.';
+
+        showSearchError(message, () => searchBooks(params));
+
+        const saved = readStorage(LAST_RESULTS_KEY, []);
+        resultsBox.replaceChildren();
+        if (saved.length) {
+          renderBooks(saved);
+          statusBox.appendChild(makeEl('p', 'small text-body-secondary mt-2 mb-0', 'Below: your last saved results.'));
+        }
+      } finally {
+        window.clearTimeout(timer);
+      }
+    }
+
+    const suggestBox = document.getElementById('bookSuggest');
+    const POPULAR = [
+      'Leo Tolstoy', 'Anna Karenina', 'War and Peace', 'Fyodor Dostoevsky', 'Crime and Punishment',
+      'The Brothers Karamazov', 'Albert Camus', 'The Stranger', 'The Plague', 'Osamu Dazai', 'No Longer Human',
+      'Oscar Wilde', 'The Picture of Dorian Gray', 'Agatha Christie', 'Murder on the Orient Express',
+      'Franz Kafka', 'The Trial', 'Haruki Murakami', 'Jane Austen', 'Pride and Prejudice', 'George Orwell',
+      '1984', 'Virginia Woolf', 'Gabriel Garcia Marquez', 'Ernest Hemingway', 'Mukhtar Auezov', 'Abai Kunanbayev',
+      'Gothic fiction', 'Japanese literature', 'Russian classics', 'Philosophy', 'Poetry', 'Detective stories'
+    ];
+
+    let suggestions = [];
+    let suggestIndex = -1;
+
+    function suggestionPool() {
+      const pool = [];
+      const add = (text, kind) => {
+        const clean = String(text || '').trim();
+        if (clean && !pool.some((item) => item.text.toLowerCase() === clean.toLowerCase())) pool.push({ text: clean, kind });
+      };
+
+      readStorage(RECENT_KEY, []).forEach((query) => add(query, 'Recent'));
+      Shelf.all().forEach((book) => { add(book.title, 'Saved'); add(book.authors.split(',')[0], 'Saved'); });
+      POPULAR.forEach((name) => add(name, 'Popular'));
+      return pool;
+    }
+
+    function closeSuggest() {
+      suggestBox.hidden = true;
+      suggestBox.replaceChildren();
+      queryInput.setAttribute('aria-expanded', 'false');
+      queryInput.removeAttribute('aria-activedescendant');
+      suggestions = [];
+      suggestIndex = -1;
+    }
+
+    function setSuggestActive(index) {
+      const items = suggestBox.children;
+      Array.from(items).forEach((item) => { item.classList.remove('active'); item.setAttribute('aria-selected', 'false'); });
+      suggestIndex = index;
+
+      if (index >= 0 && items[index]) {
+        items[index].classList.add('active');
+        items[index].setAttribute('aria-selected', 'true');
+        queryInput.setAttribute('aria-activedescendant', items[index].id);
+      } else {
+        queryInput.removeAttribute('aria-activedescendant');
+      }
+    }
+
+    function showSuggestions() {
+      const typed = queryInput.value.trim().toLowerCase();
+      const pool = suggestionPool();
+
+      if (!typed) {
+        suggestions = pool.filter((item) => item.kind === 'Recent').slice(0, 5);
+      } else {
+        const matches = pool.filter((item) => item.text.toLowerCase().includes(typed) && item.text.toLowerCase() !== typed);
+        matches.sort((a, b) => Number(b.text.toLowerCase().startsWith(typed)) - Number(a.text.toLowerCase().startsWith(typed)));
+        suggestions = matches.slice(0, 7);
+      }
+
+      suggestBox.replaceChildren();
+      suggestIndex = -1;
+
+      if (!suggestions.length) {
+        closeSuggest();
+        return;
+      }
+
+      suggestions.forEach((item, i) => {
+        const row = makeEl('li', 'mq-suggest-item');
+        row.id = 'bookSuggest-' + i;
+        row.setAttribute('role', 'option');
+        row.setAttribute('aria-selected', 'false');
+        row.dataset.index = String(i);
+
+        const at = item.text.toLowerCase().indexOf(typed);
+        const label = makeEl('span', 'mq-suggest-text');
+
+        if (typed && at > -1) {
+          label.append(
+            document.createTextNode(item.text.slice(0, at)),
+            makeEl('strong', '', item.text.slice(at, at + typed.length)),
+            document.createTextNode(item.text.slice(at + typed.length))
+          );
+        } else {
+          label.textContent = item.text;
+        }
+
+        row.append(makeEl('span', 'mq-suggest-kind', item.kind), label);
+        suggestBox.appendChild(row);
+      });
+
+      suggestBox.hidden = false;
+      queryInput.setAttribute('aria-expanded', 'true');
+    }
+
+    function chooseSuggestion(index) {
+      const item = suggestions[index];
+      if (!item) return;
+
+      queryInput.value = item.text;
+      closeSuggest();
+      bookForm.requestSubmit();
+    }
+
+    queryInput.addEventListener('input', showSuggestions);
+    queryInput.addEventListener('focus', showSuggestions);
+
+    queryInput.addEventListener('keydown', (event) => {
+      if (suggestBox.hidden) return;
+
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        setSuggestActive((suggestIndex + 1) % suggestions.length);
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        setSuggestActive((suggestIndex - 1 + suggestions.length) % suggestions.length);
+      } else if (event.key === 'Enter' && suggestIndex >= 0) {
+        event.preventDefault();
+        chooseSuggestion(suggestIndex);
+      } else if (event.key === 'Escape') {
+        closeSuggest();
+      }
+    });
+
+    suggestBox.addEventListener('mousedown', (event) => {
+      const row = event.target.closest('.mq-suggest-item');
+      if (!row) return;
+      event.preventDefault();
+      chooseSuggestion(Number(row.dataset.index));
+    });
+
+    document.addEventListener('click', (event) => {
+      if (!event.target.closest('#bookSearchWrap')) closeSuggest();
+    });
+
+    bookForm.addEventListener('submit', (event) => {
+      closeSuggest();
+      event.preventDefault();
+
+      if (!validateInput(queryInput)) {
+        queryInput.focus();
+        return;
+      }
+
+      searchBooks(currentParams());
+    });
+
+    [langSelect, orderSelect, freeCheck].forEach((control) => {
+      control.addEventListener('change', () => {
+        if (queryInput.value.trim() && validateBookQuery(queryInput.value) === '') bookForm.requestSubmit();
+      });
+    });
+
+    document.querySelectorAll('.book-chip').forEach((chip) => {
+      chip.addEventListener('click', () => {
+        queryInput.value = chip.dataset.query;
+        bookForm.requestSubmit();
+      });
+    });
+
+    renderRecent();
+    refreshShelf();
+
+    const urlQuery = new URLSearchParams(window.location.search).get('q');
+    const lastParams = readStorage(LAST_SEARCH_KEY, null);
+    const lastResults = readStorage(LAST_RESULTS_KEY, []);
+
+    if (urlQuery) {
+      queryInput.value = urlQuery.slice(0, 100);
+      bookForm.requestSubmit();
+    } else if (lastParams && lastResults.length) {
+      applyParams(lastParams);
+      renderBooks(lastResults);
+      showInfo('Your last search “' + lastParams.query + '” is shown again. Press Search to refresh it.');
+    } else {
+      showInfo('Search for a book, an author or a topic. Results come from Google Books.');
+    }
+  }
  
   const initMenuKeyboard = () => {
     const menu = document.getElementById('mainNav');
@@ -986,7 +1803,6 @@
       img.alt = book.alt;
       img.className = 'd-block w-100 carousel-img';
  
-      
       if (index === 0 || !window.jQuery) {
         img.src = book.src;
       } else {
@@ -1066,7 +1882,6 @@
     img.alt = book.alt;
     img.className = 'card-img-top gallery-img';
  
-  
     if (window.jQuery) {
       img.src = LAZY_PLACEHOLDER;
       img.dataset.src = book.src;
@@ -1146,7 +1961,6 @@
 })();
 
 
-
 $(document).ready(function () {
 
   console.log('jQuery is ready!');
@@ -1155,10 +1969,9 @@ $(document).ready(function () {
   const $doc = $(document);
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
- 
+  
   const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-  
   function rafThrottle(fn) {
     let waiting = false;
     return function () {
@@ -1171,7 +1984,7 @@ $(document).ready(function () {
     };
   }
 
- 
+  
   function isInView($el, margin) {
     if (!$el.length) return false;
     const top = $el.offset().top;
@@ -1181,7 +1994,6 @@ $(document).ready(function () {
     return bottom >= viewTop && top <= viewBottom;
   }
 
- 
   const $toastBox = $('<div id="mq-toasts" aria-live="polite" aria-atomic="false"></div>').appendTo('body');
   const toastIcons = { success: '✓', info: 'i', error: '!' };
 
@@ -1196,15 +2008,16 @@ $(document).ready(function () {
       .hide()
       .appendTo($toastBox);
 
-   
     $toast.fadeIn(250).delay(3200).fadeOut(600, function () {
       $(this).remove();
     });
 
-  
+
     $toastBox.children().slice(0, -4).remove();
     return $toast;
   }
+
+  window.mqToast = showToast;
 
   $toastBox.on('click', '.mq-toast-close', function () {
     $(this).closest('.mq-toast').stop(true).fadeOut(150, function () {
@@ -1212,7 +2025,7 @@ $(document).ready(function () {
     });
   });
 
- 
+
   const $logSearch = $('#logSearch');
 
   if ($logSearch.length) {
@@ -1225,7 +2038,6 @@ $(document).ready(function () {
       const query = $logSearch.val().trim().toLowerCase();
       const $rows = $('#readingLogBody tr');
 
-    
       const $matches = $rows.filter(function () {
         return $(this).text().toLowerCase().indexOf(query) > -1;
       });
@@ -1243,68 +2055,86 @@ $(document).ready(function () {
 
     $logSearch.on('keyup input', applyLogFilter);
 
-  
+    const LOG_SEARCH_KEY = 'marginaliaLogSearch';
+    $logSearch.on('keyup input', function () {
+      try { localStorage.setItem(LOG_SEARCH_KEY, $logSearch.val()); } catch (error) { /* ignore */ }
+    });
+
+    try {
+      const savedSearch = localStorage.getItem(LOG_SEARCH_KEY);
+      if (savedSearch) {
+        $logSearch.val(savedSearch);
+        applyLogFilter();
+      }
+    } catch (error) {  }
+
     $('#statusFilters').on('click', 'button', applyLogFilter);
   }
 
- 
-   function setupAutosuggest(options) {
-    const $input = options.$input;
-    const $list = options.$list;
-    const minChars = options.minChars || 1;
-    const maxItems = options.maxItems || 6;
-    let entries = null;
+  
+  const $gallerySearch = $('#gallerySearch');
+
+  if ($gallerySearch.length) {
+    const $suggestList = $('#suggestList');
+    const entries = [];
     let activeIndex = -1;
     let shown = [];
 
-    function getEntries() {
-      if (!entries || !entries.length) entries = options.getEntries();
-      return entries;
-    }
+  
+    $('#galleryBooksContainer article.card').each(function () {
+      const $card = $(this);
+      const title = $card.find('.card-title').text();
+      const author = $card.find('.card-subtitle').text();
 
-    function close() {
-      $list.prop('hidden', true).empty();
-      $input.attr('aria-expanded', 'false').removeAttr('aria-activedescendant');
+      entries.push({ text: title, kind: 'Book', $cards: $card });
+
+      if (!entries.some((e) => e.kind === 'Author' && e.text === author)) {
+        const $sameAuthor = $('#galleryBooksContainer article.card').filter(function () {
+          return $(this).find('.card-subtitle').text() === author;
+        });
+        entries.push({ text: author, kind: 'Author', $cards: $sameAuthor });
+      }
+    });
+
+    function closeSuggestions() {
+      $suggestList.prop('hidden', true).empty();
+      $gallerySearch.attr('aria-expanded', 'false').removeAttr('aria-activedescendant');
       activeIndex = -1;
       shown = [];
     }
 
     function setActive(index) {
-      const $items = $list.children('.mq-suggest-item');
+      const $items = $suggestList.children();
       $items.removeClass('active').attr('aria-selected', 'false');
       activeIndex = index;
+
       if (index >= 0) {
         const $item = $items.eq(index).addClass('active').attr('aria-selected', 'true');
-        $input.attr('aria-activedescendant', $item.attr('id'));
+        $gallerySearch.attr('aria-activedescendant', $item.attr('id'));
       } else {
-        $input.removeAttr('aria-activedescendant');
+        $gallerySearch.removeAttr('aria-activedescendant');
       }
     }
 
-    function render() {
-      const query = $input.val().trim().toLowerCase();
-      if (query.length < minChars) { close(); return; }
+    function renderSuggestions() {
+      const query = $gallerySearch.val().trim().toLowerCase();
 
-      const starts = [];
-      const contains = [];
-      getEntries().forEach(function (entry) {
-        const at = entry.text.toLowerCase().indexOf(query);
-        if (at === 0) starts.push(entry);
-        else if (at > 0) contains.push(entry);
-      });
-      shown = starts.concat(contains)
-        .filter((e) => e.text.toLowerCase() !== query)
-        .slice(0, maxItems);
+      if (!query) {
+        closeSuggestions();
+        return;
+      }
 
-      $list.empty();
+      shown = entries.filter((e) => e.text.toLowerCase().indexOf(query) > -1).slice(0, 6);
+      $suggestList.empty();
+
       if (!shown.length) {
-        $list.append('<li class="mq-suggest-empty">No suggestions found</li>');
+        $suggestList.append('<li class="mq-suggest-empty">No suggestions found</li>');
       }
 
       $.each(shown, function (i, entry) {
         const at = entry.text.toLowerCase().indexOf(query);
         const $li = $('<li class="mq-suggest-item" role="option" aria-selected="false"></li>')
-          .attr('id', $list.attr('id') + '-' + i)
+          .attr('id', 'suggest-' + i)
           .data('index', i)
           .append($('<span class="mq-suggest-kind"></span>').text(entry.kind))
           .append(
@@ -1313,24 +2143,35 @@ $(document).ready(function () {
               .append($('<strong></strong>').text(entry.text.slice(at, at + query.length)))
               .append(document.createTextNode(entry.text.slice(at + query.length)))
           );
-        $list.append($li);
+        $suggestList.append($li);
       });
 
-      $list.prop('hidden', false);
-      $input.attr('aria-expanded', 'true');
+      $suggestList.prop('hidden', false);
+      $gallerySearch.attr('aria-expanded', 'true');
       activeIndex = -1;
     }
 
-    function choose(entry) {
-      $input.val(entry.text);
-      close();
-      options.onChoose(entry);
+    function chooseSuggestion(entry) {
+      $gallerySearch.val(entry.text);
+      closeSuggestions();
+
+      const $first = entry.$cards.first();
+      $first[0].scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+
+    
+      entry.$cards.removeClass('mq-flash');
+      void entry.$cards[0].offsetWidth;
+      entry.$cards.addClass('mq-flash');
+      window.setTimeout(() => entry.$cards.removeClass('mq-flash'), 2400);
+
+      showToast('Showing: ' + entry.text, 'info');
+      lazyLoadImages();
     }
 
-    $input.on('input', render);
+    $gallerySearch.on('input', renderSuggestions);
 
-    $input.on('keydown', function (event) {
-      if ($list.prop('hidden')) return;
+    $gallerySearch.on('keydown', function (event) {
+      if ($suggestList.prop('hidden')) return;
 
       if (event.key === 'ArrowDown') {
         event.preventDefault();
@@ -1339,144 +2180,29 @@ $(document).ready(function () {
         event.preventDefault();
         setActive(shown.length ? (activeIndex - 1 + shown.length) % shown.length : -1);
       } else if (event.key === 'Enter') {
-        if (activeIndex >= 0 && shown[activeIndex]) {
-          event.preventDefault();
-          event.stopImmediatePropagation();
-          choose(shown[activeIndex]);
-        } else if (options.enterPicksFirst && shown[0]) {
-          event.preventDefault();
-          choose(shown[0]);
-        } else {
-          close();
-        }
+        event.preventDefault();
+        const entry = shown[activeIndex >= 0 ? activeIndex : 0];
+        if (entry) chooseSuggestion(entry);
       } else if (event.key === 'Escape') {
-        close();
+        closeSuggestions();
       }
     });
 
-    $list.on('mousedown', '.mq-suggest-item', function (event) {
+    $suggestList.on('mousedown', '.mq-suggest-item', function (event) {
       event.preventDefault();
-      choose(shown[$(this).data('index')]);
+      chooseSuggestion(shown[$(this).data('index')]);
     });
 
-    $list.on('mouseenter', '.mq-suggest-item', function () {
+    $suggestList.on('mouseenter', '.mq-suggest-item', function () {
       setActive($(this).data('index'));
     });
 
-    $input.on('blur', function () { window.setTimeout(close, 120); });
-
     $doc.on('click', function (event) {
-      if (!$(event.target).closest($list.closest('.mq-search')).length) close();
+      if (!$(event.target).closest('.mq-search').length) closeSuggestions();
     });
   }
 
-  const $gallerySearch = $('#gallerySearch');
-
-  if ($gallerySearch.length) {
-    setupAutosuggest({
-      $input: $gallerySearch,
-      $list: $('#suggestList'),
-      enterPicksFirst: true,
-      getEntries: function () {
-        const list = [];
-        const $cards = $('#galleryBooksContainer article.card');
-
-        $cards.each(function () {
-          const $card = $(this);
-          const author = $card.find('.card-subtitle').text();
-
-          list.push({ text: $card.find('.card-title').text(), kind: 'Book', $cards: $card });
-
-          if (!list.some((e) => e.kind === 'Author' && e.text === author)) {
-            list.push({
-              text: author,
-              kind: 'Author',
-              $cards: $cards.filter(function () {
-                return $(this).find('.card-subtitle').text() === author;
-              })
-            });
-          }
-        });
-        return list;
-      },
-      onChoose: function (entry) {
-        entry.$cards[0].scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
-        entry.$cards.removeClass('mq-flash');
-        void entry.$cards[0].offsetWidth;
-        entry.$cards.addClass('mq-flash');
-        window.setTimeout(() => entry.$cards.removeClass('mq-flash'), 2400);
-        showToast('Showing: ' + entry.text, 'info');
-        lazyLoadImages();
-      }
-    });
-  }
-
-  if ($logSearch.length && $('#logSuggest').length) {
-    setupAutosuggest({
-      $input: $logSearch,
-      $list: $('#logSuggest'),
-      enterPicksFirst: true,
-      getEntries: function () {
-        const seen = {};
-        const list = [];
-        const kinds = ['Book', 'Author', 'Genre'];
-
-        $('#readingLogBody tr').each(function () {
-          $(this).children('td').slice(0, 3).each(function (i) {
-            const text = $(this).text().trim();
-            if (text && !seen[kinds[i] + text]) {
-              seen[kinds[i] + text] = true;
-              list.push({ text: text, kind: kinds[i] });
-            }
-          });
-        });
-        return list;
-      },
-      onChoose: function () {
-        $logSearch.trigger('input');
-      }
-    });
-  }
-
-  const $aboutSearch = $('#pageSearch');
-
-  if ($aboutSearch.length && $('#pageSuggest').length) {
-    setupAutosuggest({
-      $input: $aboutSearch,
-      $list: $('#pageSuggest'),
-      minChars: 2,
-      getEntries: function () {
-        const list = [];
-        const seen = {};
-        const $root = $('#main');
-
-        $root.find('h1, h2, h3, .accordion-header').each(function () {
-          const text = $(this).text().replace(/\s+/g, ' ').trim();
-          if (text && !seen[text.toLowerCase()] && !$(this).closest('.mq-no-highlight').length) {
-            seen[text.toLowerCase()] = true;
-            list.push({ text: text, kind: 'Section' });
-          }
-        });
-
-        const words = $root.clone().find('.mq-no-highlight, script, style').remove().end()
-          .text().match(/[A-Za-z\u0400-\u04FF][A-Za-z\u0400-\u04FF'’-]{3,}/g) || [];
-
-        words.forEach(function (word) {
-          const key = word.toLowerCase();
-          if (!seen[key]) {
-            seen[key] = true;
-            list.push({ text: key, kind: 'Word' });
-          }
-        });
-        return list;
-      },
-      onChoose: function () {
-        $aboutSearch.trigger('input');
-      }
-    });
-  }
-
- 
+  
   const $pageSearch = $('#pageSearch');
 
   if ($pageSearch.length) {
@@ -1492,24 +2218,21 @@ $(document).ready(function () {
         .css('display', open ? 'block' : 'none');
     }
 
-    
     function clearHighlights() {
       $searchRoot.find('mark.mq-highlight').each(function () {
         $(this).replaceWith(document.createTextNode($(this).text()));
       });
-      $searchRoot[0].normalize(); 
+      $searchRoot[0].normalize();
 
-      
       $searchRoot.find('.accordion-item.mq-auto-open').each(function () {
         setAccordion($(this), false);
         $(this).removeClass('mq-auto-open');
       });
     }
 
-   
     function highlightIn($element, regex) {
       $element.contents().each(function () {
-        if (this.nodeType === 3) {
+        if (this.nodeType === 3) { 
           if (!this.nodeValue.trim()) return;
           regex.lastIndex = 0;
           if (!regex.test(this.nodeValue)) return;
@@ -1534,13 +2257,11 @@ $(document).ready(function () {
         return;
       }
 
-    
       const regex = new RegExp('(' + escapeRegExp(term) + ')', 'gi');
       highlightIn($searchRoot, regex);
 
       const total = $searchRoot.find('mark.mq-highlight').length;
 
-      
       $searchRoot.find('.accordion-item').each(function () {
         const $item = $(this);
         if ($item.find('mark.mq-highlight').length && !$item.find('.accordion-header').hasClass('active')) {
@@ -1561,7 +2282,7 @@ $(document).ready(function () {
       debounceTimer = window.setTimeout(runPageSearch, 150);
     });
 
-    
+   
     $pageSearch.on('keydown', function (event) {
       if (event.key !== 'Enter') return;
       event.preventDefault();
@@ -1593,7 +2314,7 @@ $(document).ready(function () {
   $win.on('scroll resize', rafThrottle(updateProgress));
   updateProgress();
 
-  
+
   const $counters = $('.mq-stat-number');
 
   function animateCounter($el) {
@@ -1608,7 +2329,7 @@ $(document).ready(function () {
       return;
     }
 
-  
+    
     $({ value: 0 }).animate({ value: target }, {
       duration: 2000,
       easing: 'swing',
@@ -1634,6 +2355,7 @@ $(document).ready(function () {
   }
 
 
+  
   function submitWithSpinner($form, callback) {
     const $submit = $form.find('[type="submit"]');
     const $others = $form.find('button').not($submit);
@@ -1652,35 +2374,10 @@ $(document).ready(function () {
     }, 2000);
   }
 
-
-  $('#contactForm').on('mq:valid', function () {
-    const $form = $(this);
-
-    submitWithSpinner($form, function () {
-      const $success = $('#formSuccess').prop('hidden', false);
-      $success[0].scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
-      $form[0].reset();
-      showToast('Form submitted successfully. Thank you!', 'success');
-    });
+  $doc.on('mq:valid', 'form', function (event) {
+    const detail = event.originalEvent && event.originalEvent.detail;
+    submitWithSpinner($(this), (detail && detail.done) || function () {});
   });
-
-  
-  $('#accountForm').on('mq:valid', function (event) {
-    const $form = $(this);
-    const username = event.originalEvent.detail.username;
-
-    submitWithSpinner($form, function () {
-      $('#accountSuccess')
-        .text('Account created! Welcome, ' + username + '.')
-        .prop('hidden', false)
-        .removeClass('d-none');
-      $form[0].reset();
-      showToast('Account created. Welcome, ' + username + '!', 'success');
-
-      window.setTimeout(() => $('#closeAccountBtn').trigger('click'), 1800);
-    });
-  });
-
 
   const ICON_COPY =
     '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" ' +
@@ -1693,7 +2390,6 @@ $(document).ready(function () {
 
   let copyingFromButton = false;
 
-  
   function copyText(text) {
     const result = $.Deferred();
 
@@ -1723,7 +2419,7 @@ $(document).ready(function () {
     return result.promise();
   }
 
-
+  
   $('.mq-card blockquote').each(function () {
     const $quote = $(this).addClass('mq-copyable');
 
@@ -1742,7 +2438,7 @@ $(document).ready(function () {
     const $btn = $(this);
     const $row = $btn.closest('.mq-quote-row');
     const quote = $row.find('blockquote').text().trim();
-    const source = $row.next('p').text().trim();
+    const source = $row.next('p').text().trim(); 
     const $tooltip = $btn.siblings('.mq-tooltip');
 
     copyingFromButton = true;
@@ -1754,7 +2450,7 @@ $(document).ready(function () {
         $tooltip.stop(true, true).fadeIn(150);
         showToast('Quote copied to clipboard', 'success');
 
-     
+        
         $btn.data('timer', window.setTimeout(function () {
           $btn.removeClass('is-copied').html(ICON_COPY).attr('aria-label', 'Copy quote to clipboard');
           $tooltip.fadeOut(250);
@@ -1768,7 +2464,7 @@ $(document).ready(function () {
       });
   });
 
- 
+
   $doc.on('copy', function () {
     if (copyingFromButton) return;
     const selection = window.getSelection();
@@ -1792,7 +2488,7 @@ $(document).ready(function () {
 
   function paintModeButton() {
     const isLight = $root.attr('data-bs-theme') === 'light';
-   
+    
     $modeBtn
       .html(isLight ? ICON_MOON : ICON_SUN)
       .attr('aria-label', isLight ? 'Switch to night mode' : 'Switch to day mode')
@@ -1801,7 +2497,7 @@ $(document).ready(function () {
   }
 
   function setColorMode(mode, announce) {
-   
+    
     $root.addClass('mq-mode-anim');
     window.setTimeout(() => $root.removeClass('mq-mode-anim'), 500);
 
@@ -1821,7 +2517,7 @@ $(document).ready(function () {
     setColorMode($root.attr('data-bs-theme') === 'light' ? 'dark' : 'light', true);
   });
 
-
+ 
   function loadImage($img) {
     const realSrc = $img.attr('data-src');
     if (!realSrc) return;
@@ -1851,7 +2547,6 @@ $(document).ready(function () {
 
   $win.on('scroll resize load', rafThrottle(lazyLoadImages));
   lazyLoadImages();
-
 
   const $carousel = $('#galleryCarousel');
 
