@@ -5,7 +5,11 @@
   const body = document.body;
   const pageName = window.location.pathname.split('/').pop().toLowerCase();
   const isIndexPage = pageName === '' || pageName === 'index.html';
- 
+ const savedColorMode = localStorage.getItem('marginaliaColorMode');
+
+if (savedColorMode === 'light' || savedColorMode === 'dark') {
+    root.setAttribute('data-bs-theme', savedColorMode);
+}
   const themes = ['#211f1d', '#2a2723', '#34302a', '#302824'];
   const savedThemeIndex = Number(localStorage.getItem('marginaliaThemeIndex'));
   let themeIndex = Number.isInteger(savedThemeIndex) && savedThemeIndex >= 0 && savedThemeIndex < themes.length
